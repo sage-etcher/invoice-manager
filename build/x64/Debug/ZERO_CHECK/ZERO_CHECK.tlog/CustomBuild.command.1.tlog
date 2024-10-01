@@ -1,0 +1,10 @@
+^E:\USERS\IT\CODE\INVOICE\BUILD\CMAKEFILES\5DCCC93D613616B533D78BAECFD3552F\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SE:/Users/it/Code/invoice -BE:/Users/it/Code/invoice/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/Users/it/Code/invoice/build/invoice-manager.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

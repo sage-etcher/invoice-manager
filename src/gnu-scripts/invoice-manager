@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+dbfile="/var/db/invoice-manager/invoicedb.db"
+siteoutdir="/var/db/invoice-manager/site"
+siteinstall="/mnt/it/groupdata/website/billing"
+
+mkdir -p /var/db/invoice-manager/site
+
+find /mnt/groupdata/ScannedFiles/ScannedMaterial\(NEWSERVER2009\) -type f | invoice-update-db -d "${dbfile}"
+find /mnt/groupdata/website/billing/FILES -type f | invoice-update-db -d "${dbfile}"
+
+# invoice-gen-site -d "${dbfile}" -o "${siteoutdir}"
+
+# cp -f "${siteoutdir}\*.html" "${siteinstall}\"
+

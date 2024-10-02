@@ -135,12 +135,12 @@ parse_path (char *filepath)
         switch (retcode)
         {
         case PCRE2_ERROR_NOMATCH:
-            log_warning ("Bad Filename: '%s'\n", filename);
+            log_warning ("Bad Filename: '%s'\n", filepath);
             break;
 
         default:
             log_error ("%d: Regex Matching Failed in filename: '%s'\n", 
-                    retcode, filename);
+                    retcode, filepath);
             break;
         }
 
@@ -154,7 +154,7 @@ parse_path (char *filepath)
     if (retcode == 0)
     {
         log_error ("ovector was not big enough for all the captured substring: '%s'\n", 
-                filename);
+                filepath);
 
         pcre2_match_data_free (match_data);
         return NULL;

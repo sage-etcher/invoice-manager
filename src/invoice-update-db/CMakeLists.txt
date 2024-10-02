@@ -1,8 +1,12 @@
 
+cmake_minimum_required(VERSION 3.12)
 project(invoice-update-db VERSION 0.1 LANGUAGES C)
 
-#set(CMAKE_MODULE_PATH "E:\\Libraries\\pcre2-10.44\\build\\out\\cmake")
-find_package(pcre2 DIR "E:/Libraries/pcre2-10.44/build/out/cmake")
+#set(PCRE2_DIR)
+#set(PCRE2_ROOT "E:/Libraries/pcre2-10.44/build/out")
+#set(PCRE2_INCLUDE_DIR "E:/Libraries/pcre2-10.44/build/out/include")
+set(PCRE2_USE_STATIC_LIBS ON)
+find_package(PCRE2 CONFIG COMPONENTS 8BIT)
 
 add_executable(invoice-update-db)
 target_sources(invoice-update-db PRIVATE 

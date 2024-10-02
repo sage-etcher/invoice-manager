@@ -11,6 +11,7 @@ char *readline (FILE *stream);
 char *freadline (FILE *stream);
 int ffindc (int character, FILE *stream);
 
+char *basename (char *filepath);
 
 #endif /* header guard */
 /* end of file */

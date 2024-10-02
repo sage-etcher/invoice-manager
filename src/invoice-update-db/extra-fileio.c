@@ -5,14 +5,15 @@
 #include "logging.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 /* designed to work on any stream */
+static char *s_readline_result = NULL;       /* reuse buffer between calls */
+static size_t s_readline_alloc = 0;          /* reuse alloc between calls */
 char *
 readline (FILE *stream)
 {
-    static char *s_result = NULL;       /* reuse buffer between calls */
-    static size_t s_alloc = 0;          /* reuse alloc between calls */
     const size_t DEFAULT_ALLOC = 2;     /* initial buffer length */
 
     int c;              /* character */
@@ -28,46 +29,45 @@ readline (FILE *stream)
     if (feof (stream)) return NULL;
 
     /* first time initialize */
-    if (s_result == NULL)
+    if (s_readline_result == NULL)
     {
-        s_result = malloc (DEFAULT_ALLOC + 1);
-        if (!s_result) return NULL;
-        s_alloc = DEFAULT_ALLOC;
+        s_readline_result = malloc (DEFAULT_ALLOC + 1);
+        if (!s_readline_result) return NULL;
+        s_readline_alloc = DEFAULT_ALLOC;
     }
 
     /* append characters until buffer is empty or newline is found */
-    while (!(feof (stream)) && 
-           !(((c = fgetc (stream)) == '\n') || (c == '\r')))
+    while (c = fgetc (stream), !feof(stream))
     {
-        if (i >= s_alloc)
+        if ((c == '\n') || (c == '\r') || (c == EOF)) break;
+
+        if (i >= s_readline_alloc)
         {
             /* handle size_t overflow */
-            if (SIZE_MAX / 2 < s_alloc)
+            if (SIZE_MAX / 2 < s_readline_alloc)
             {
                 errno = ERANGE;
                 return NULL;
             }
 
             /* extend s_result */
-            tmp = realloc (s_result, s_alloc * 2 + 1);
+            tmp = realloc (s_readline_result, s_readline_alloc * 2 + 1);
             if (tmp == NULL) return NULL;
-            s_result = tmp;
-            s_alloc *= 2;
+            s_readline_result = tmp;
+            s_readline_alloc *= 2;
         }
 
         /* store the character in our buffer */
-        s_result[i] = (char)c;
+        s_readline_result[i] = (char)c;
 
         /* update the iterator */
         i++; 
     }
 
     /* append the null terminator */
-    s_result[i] = '\0';
+    s_readline_result[i] = '\0';
 
-    fflush (g_debug);
-
-    return s_result;
+    return s_readline_result;
 }
 
 
@@ -132,5 +132,35 @@ ffindc (int character, FILE *stream)
     return ftell (stream);
 }
 
+
+/* string utils */
+char *
+basename (char *filepath)
+{
+    char *iter = NULL;
+
+    if (filepath == NULL) return NULL;
+
+    /* start on last character of the string */
+    iter = strchr (filepath, '\0');
+    iter--;
+
+    /* loop until we reach the origin */
+    while (iter >= filepath)
+    {
+        /* if directory character is reached we found the basename */
+        if ((*iter == '/') ||
+            (*iter == '\\'))
+        {
+            break;      /* stop looping */
+        }
+
+        iter--;         /* step backwards through the string */
+    }
+
+    /* return the cursor (either following '/' or at filepath)*/
+    iter++;
+    return iter;
+}
 
 /* end of file */

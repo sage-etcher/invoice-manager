@@ -14,6 +14,10 @@ main (int argc, char **argv)
     char *filepath = NULL;
     parsed_t *invoice;
     sqlite3 *db = NULL;
+
+    /* const char *db_file = "/var/db/invoice-manager/core.db"; */
+    const char *db_file = "core.db";
+
     
     time_t t = time (NULL);
     struct tm *tm = localtime (&t);

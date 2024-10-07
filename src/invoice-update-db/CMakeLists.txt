@@ -1,23 +1,32 @@
 
 # cmake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 project(invoice-update-db VERSION 0.1 LANGUAGES C)
 
 # find libraries 
 set(PCRE2_USE_STATIC_LIBS ON)
-find_package(PCRE2 CONFIG COMPONENTS 8BIT)
+find_package(PCRE2 CONFIG COMPONENTS 8BIT REQUIRED)
+find_package(SQLite3 REQUIRED)
+
 
 # build/link exectuable
 add_executable(invoice-update-db)
 target_sources(invoice-update-db PRIVATE 
         main.c 
+        database.c
         extra-fileio.c
         extra-string.c
         logging.c 
         parser.c
 )
-target_include_directories(invoice-update-db PRIVATE ${PCRE2_INCLUDE_DIR})
-target_link_libraries(invoice-update-db PRIVATE ${PCRE2_LIBRARIES})
+target_include_directories(invoice-update-db PRIVATE 
+        ${PCRE2_INCLUDE_DIR}
+        ${SQLite3_INCLUDE_DIRS}
+)
+target_link_libraries(invoice-update-db PRIVATE 
+        ${PCRE2_LIBRARIES}
+        ${SQLite3_LIBRARIES}
+)
 
 set_target_properties(invoice-update-db PROPERTIES C_STANDARD 11)
 set_target_properties(invoice-update-db PROPERTIES C_STANDARD_REQUIRED ON)

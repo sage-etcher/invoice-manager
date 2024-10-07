@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.14)
 
 add_subdirectory(invoice-update-db)
 add_subdirectory(invoice-gen-site)

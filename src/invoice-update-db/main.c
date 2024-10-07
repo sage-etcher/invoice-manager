@@ -3,7 +3,7 @@
 #include "extra-string.h"
 #include "logging.h"
 #include "parser.h"
-//#include "database.h"
+#include "database.h"
 #include <stdlib.h>
 #include <time.h>
 
@@ -13,7 +13,7 @@ main (int argc, char **argv)
 {
     char *filepath = NULL;
     parsed_t *invoice;
-    //sqlite3 *db = NULL;
+    sqlite3 *db = NULL;
     
     time_t t = time (NULL);
     struct tm *tm = localtime (&t);
@@ -24,7 +24,12 @@ main (int argc, char **argv)
         log_error ("Failed to initialize parser\n");
         goto main_exit_logging;
     }
-    // db = database_init (db_file);
+    db = database_init (db_file);
+    if (db == NULL)
+    {
+        log_error ("Failed to initialize database\n");
+        goto main_exit_parser;
+    }
 
     g_debug = NULL;
 
@@ -67,11 +72,11 @@ main (int argc, char **argv)
         //        customer_name, year, month, day);
 
 
-        //db_insert_invoice (db, filepath, customer_name, year, month, day);
+        db_insert_invoice (db, filepath, customer_name, year, month, day);
     }
 
 main_exit_database:
-    //database_quit (db_file);
+    database_quit (db_file);
 main_exit_parser:
     parser_quit ();
 main_exit_logging:

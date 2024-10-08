@@ -15,14 +15,10 @@ enum
     RE_INVOICE_GROUP,
     RE_COUNT,
 };
-
-const char *G_PATTERNS_RAW[RE_COUNT] = 
-{
+const char *G_PATTERNS_RAW[RE_COUNT] = {
     [RE_INVOICE_GROUP] = "^(.*?)(\\d{4}).*?(\\d{2})(\\d{2}).*\\.pdf",
 };
-
-static pcre2_code *g_re_patterns[RE_COUNT] = { NULL };
-
+static pcre2_code *g_re_patterns[RE_COUNT];
 
 
 static void destroy_pattern_arr (pcre2_code **compiled_arr, size_t n);
@@ -68,8 +64,8 @@ compile_pattern_arr (const char **pattern_text_arr, size_t n, pcre2_code **compi
         {
             PCRE2_UCHAR buffer[256];
             pcre2_get_error_message (errornumber, buffer, sizeof (buffer));
-            log_error ("PCRE2 compilation of statement %zu failed at offset %d: %s\n", 
-                    i, (int)erroroffset, buffer);
+            log_verbose ("PCRE2: %d: %s\n", errornumber, buffer);
+            log_error ("PCRE2: %zu: statement compililation failed\n", i);
             destroy_pattern_arr (compiled_out, i);
             return 1;
         }
@@ -135,12 +131,11 @@ parse_path (char *filepath)
         switch (retcode)
         {
         case PCRE2_ERROR_NOMATCH:
-            log_warning ("Bad Filename: '%s'\n", filepath);
+            log_verbose ("PCRE2: no matches found\n");
             break;
 
         default:
-            log_error ("%d: Regex Matching Failed in filename: '%s'\n", 
-                    retcode, filepath);
+            log_verbose ("PCRE2: %d: unknown error\n", retcode);
             break;
         }
 
@@ -153,8 +148,7 @@ parse_path (char *filepath)
     /* not enough room in match_data */
     if (retcode == 0)
     {
-        log_error ("ovector was not big enough for all the captured substring: '%s'\n", 
-                filepath);
+        log_debug ("PCRE2: ovector too small\n");
 
         pcre2_match_data_free (match_data);
         return NULL;
@@ -196,26 +190,26 @@ validate_date (struct tm *tm, int year, int month, int day)
           (month < (tm->tm_mon  + 1)) ||
           (day   < (tm->tm_mday))))
     {
-        log_debug ("date set into the future: %d/%d/%d\n", month, day, year);
+        log_debug ("Invalid date: %d/%d/%d\n", month, day, year);
         return 0;
     }
 
     /* too old/invalid range */
     if (year < 1900) 
     {
-        log_debug ("year too old: %d\n", year);
+        log_debug ("Invalid year: %d\n", year);
         return 0;
     }
 
     if ((month > 12) || (month < 1)) 
     {
-        log_debug ("invalid month: %d\n", month);
+        log_debug ("Invalid month: %d\n", month);
         return 0;
     }
 
     if ((day > DAYS_IN_MONTH[month - 1]) || (day < 1)) 
     {
-        log_debug ("invalid day: %d\n", day);
+        log_debug ("Invalid day: %d\n", day);
         return 0;
     }
 

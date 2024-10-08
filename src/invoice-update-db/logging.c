@@ -35,3 +35,19 @@ logging_quit (void)
     g_warning = NULL;
     g_error   = NULL;
 }
+
+
+void
+log_file (const char *filename, char *msg)
+{
+    FILE *fp = NULL;
+    fp = fopen (filename, "w+");
+    if (!fp) return;
+
+    (void)fprintf (fp, "%s\n", msg);
+
+    fflush (fp);
+    fclose (fp); 
+    fp = NULL;
+    return;
+}

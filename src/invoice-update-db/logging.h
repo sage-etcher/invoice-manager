@@ -31,6 +31,7 @@ extern FILE *g_error;
 void logging_init (void);
 void logging_quit (void);
 
+void log_file (const char *filename, char *msg);
 
 #endif /* header guard */
 /* end of file */

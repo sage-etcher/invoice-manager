@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 
 add_subdirectory(invoice-update-db)
 add_subdirectory(invoice-gen-site)
+add_subdirectory(testing)
 
 if (WIN32)
     add_subdirectory(windows-scripts)

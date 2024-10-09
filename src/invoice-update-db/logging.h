@@ -16,8 +16,8 @@ extern FILE *g_error;
 /* format should always be an implicit c compile time constant for the 
  * "warning: " and "error: " prefixes to work properly */
 #define log_info(...)    (void)((!g_info)    || (fprintf (g_info, __VA_ARGS__)))
-#define log_verbose(...) (void)((!g_verbose) || (fprintf (g_verbose, __VA_ARGS__)))
-#define log_debug(...)   (void)((!g_debug)   || (fprintf (g_debug, __VA_ARGS__)))
+#define log_verbose(...) (void)((!g_verbose) || (fprintf (g_verbose, "verbose: " __VA_ARGS__)))
+#define log_debug(...)   (void)((!g_debug)   || (fprintf (g_debug, "debug: " __VA_ARGS__)))
 #define log_warning(...) (void)((!g_warning) || (fprintf (g_warning, "warning: " __VA_ARGS__)))
 #define log_error(...)   (void)((!g_error)   || (fprintf (g_error, "error: " __VA_ARGS__)))
 

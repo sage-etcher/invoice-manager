@@ -5,7 +5,6 @@
 #include "parser.h"
 #include "database.h"
 #include <stdlib.h>
-#include <time.h>
 
 
 int
@@ -19,9 +18,6 @@ main (int argc, char **argv)
     const char *db_file = "core.db";
     const char *badfileslog_file = "badfiles.log";
     
-    time_t t = time (NULL);
-    struct tm *tm = localtime (&t);
-
     logging_init ();
     if (parser_init () != 0)
     {
@@ -38,15 +34,14 @@ main (int argc, char **argv)
         goto main_exit_parser;
     }
 
-    g_debug = NULL;
+    /* g_debug = NULL; */
 
     char *customer_name = NULL;
-    int year  = 0;
-    int month = 0;
-    int day   = 0;
 
     while ((filepath = readline (stdin)))
     {
+        if (filepath == NULL) continue;
+
         /* skip empty lines */
         filepath = trim_whitespace (filepath);
         if (is_empty (filepath)) continue;
@@ -55,39 +50,34 @@ main (int argc, char **argv)
         invoice = parse_path (filepath);
         if (invoice == NULL) 
         {
-            log_warning ("Bad File: %s\n", filepath);
+            log_warning ("Skipping Bad File: '%s'\n", filepath);
             log_file (badfileslog_file, filepath);
-
             continue;
         }
 
-        /* get customer name */
-        (void)find_replace_char (invoice->name, '_', ' ');
-        customer_name = invoice->name;
-        customer_name = trim_whitespace (customer_name);
-
-        /* get invoice date */
-        year  = atoi (invoice->year);
-        month = atoi (invoice->month);
-        day   = atoi (invoice->day);
-
-        /* verify that the date is sane */
-        if (!validate_date (tm, year, month, day))
+        /* skip file if it already exists in database */
+        if (database_search_by_file (db, filepath, NULL)) 
         {
-            log_warning ("Bad File: %s\n", filepath);
-            log_file (badfileslog_file, filepath);
-            
-            year  = 0;
-            month = 0;
-            day   = 0;
+            log_verbose ("File already cached: '%s'\n", filepath);
+            continue;
         }
-        
-        (void)database_insert_invoice (db, filepath, customer_name, year, 
-                                       month, day);
 
+        if ((invoice->day == 0) || (invoice->month == 0) || (invoice->year == 0))
+        {
+            log_warning ("Bad Date in file: '%s'\n", filepath);
+            log_file (badfileslog_file, filepath);
+        }
+
+        /* add new file into the database */
+        if (!database_insert_invoice (db, filepath, invoice->name, 
+                    invoice->year, invoice->month, invoice->day))
+        {
+            log_error ("Failed to insert file: '%s'\n", filepath);
+        }
     }
 
-main_exit_database:
+
+/* main_exit_database: */
     database_quit (db); 
     db = NULL;
 main_exit_parser:

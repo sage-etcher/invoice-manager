@@ -2,8 +2,6 @@
 #ifndef PARSER_HEADER
 #define PARSER_HEADER
 
-#include <time.h>
-
 
 #define MAX_PARSED_NAME  256
 #define MAX_PARSED_GROUP 2

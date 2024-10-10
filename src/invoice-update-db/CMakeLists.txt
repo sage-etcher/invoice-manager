@@ -10,27 +10,29 @@ find_package(SQLite3 REQUIRED)
 
 
 # build/link exectuable
-add_executable(invoice-update-db)
-target_sources(invoice-update-db PRIVATE 
-        main.c 
-        database.c
-        extra-fileio.c
-        extra-string.c
-        logging.c 
+add_executable(invoice-update-db
+        main.c
         parser.c
 )
+
 target_include_directories(invoice-update-db PRIVATE 
-        ${PCRE2_INCLUDE_DIR}
-        ${SQLite3_INCLUDE_DIRS}
-)
-target_link_libraries(invoice-update-db PRIVATE 
-        ${PCRE2_LIBRARIES}
-        ${SQLite3_LIBRARIES}
+        "${PROJECT_BINARY_DIR}"
+        "${CMAKE_SOURCE_DIR}/src/logging"
+        "${CMAKE_SOURCE_DIR}/src/database"
+        "${CMAKE_SOURCE_DIR}/src/extra-string"
+        "${CMAKE_SOURCE_DIR}/src/extra-fileio"
+        "${SQLite3_INCLUDE_DIRS}"
+        "${PCRE2_INCLUDE_DIR}"
 )
 
-set_target_properties(invoice-update-db PROPERTIES C_STANDARD 11)
-set_target_properties(invoice-update-db PROPERTIES C_STANDARD_REQUIRED ON)
-set_target_properties(invoice-update-db PROPERTIES C_EXTENSIONS OFF)
+target_link_libraries(invoice-update-db PRIVATE 
+        "${CMAKE_BINARY_DIR}/src/logging/${CMAKE_BUILD_TYPE}/logging.lib"
+        "${CMAKE_BINARY_DIR}/src/database/${CMAKE_BUILD_TYPE}/database.lib"
+        "${CMAKE_BINARY_DIR}/src/extra-string/${CMAKE_BUILD_TYPE}/extra-string.lib"
+        "${CMAKE_BINARY_DIR}/src/extra-fileio/${CMAKE_BUILD_TYPE}/extra-fileio.lib"
+        "${PCRE2_LIBRARIES}"
+        "${SQLite3_LIBRARIES}"
+)
 
 # install
 install(PROGRAMS invoice-update-db DESTINATION bin)

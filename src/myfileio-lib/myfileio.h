@@ -1,6 +1,6 @@
 
-#ifndef EXTRA_FILEIO_HEADER 
-#define EXTRA_FILEIO_HEADER
+#ifndef INVOICE_MYFILEIO_HEADER
+#define INVOICE_MYFILEIO_HEADER
 
 #include <stdio.h>
 

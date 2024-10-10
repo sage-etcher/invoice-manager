@@ -1,6 +1,6 @@
 
-#ifndef EXTRA_STRING_HEADER
-#define EXTRA_STRING_HEADER
+#ifndef INVOICE_MYSTRING_HEADER
+#define INVOICE_MYSTRING_HEADER
 
 #define LEN(arr) (sizeof (arr) / sizeof (*arr))
 

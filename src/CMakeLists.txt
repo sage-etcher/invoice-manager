@@ -5,12 +5,13 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 #set(BUILD_MODE "x64" CACHE STRING "Build mode: x64 or Win32")
 
-add_subdirectory(logging)
-add_subdirectory(extra-fileio)
-add_subdirectory(extra-string)
-add_subdirectory(database)
+add_subdirectory(logging-lib)
+add_subdirectory(myfileio-lib)
+add_subdirectory(mystring-lib)
+add_subdirectory(database-lib)
 
-add_subdirectory(invoice-update-db)
+add_subdirectory(update-database)
+
 #add_subdirectory(invoice-gen-site)
 
 #add_subdirectory(testing)

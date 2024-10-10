@@ -1,6 +1,6 @@
 
-#ifndef LOGGING_HEADER
-#define LOGGING_HEADER
+#ifndef INVOICE_LOGGING_HEADER
+#define INVOICE_LOGGING_HEADER
 
 
 #include <stdio.h>

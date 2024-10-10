@@ -1,8 +1,7 @@
 
-#ifndef DATABASE_HEADER
-#define DATABASE_HEADER
+#ifndef INVOICE_DATABASE_HEADER
+#define INVOICE_DATABASE_HEADER
 
-#include "logging.h"
 #include <sqlite3.h>
 
 

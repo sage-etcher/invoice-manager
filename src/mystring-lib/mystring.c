@@ -1,8 +1,8 @@
 
-#include "extra-string.h"
+#include "mystring.h"
 
 #include <ctype.h>
-#include "logging.h"
+#include "logging-lib/logging.h"
 #include <string.h>
 
 

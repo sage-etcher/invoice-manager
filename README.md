@@ -32,4 +32,4 @@ cmake --install .
 
 ## License
 
-Licesned under (MIT)[/LICENSE]
+Licesned under [MIT](/LICENSE)

@@ -5,6 +5,15 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED True)
 #set(BUILD_MODE "x64" CACHE STRING "Build mode: x64 or Win32")
 
+if(MSVC)
+    message("compiling for MSVC")
+    add_compile_options(/W4)
+else()
+    message("compiling for non MSVC")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+
 add_subdirectory(logging-lib)
 add_subdirectory(myfileio-lib)
 add_subdirectory(mystring-lib)
@@ -22,11 +31,11 @@ else()
     add_subdirectory(gnu-scripts)
 endif()
 
-if(MSVC)
-    add_compile_options(/W4)
-else()
-    add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+
+
+
+
+
 
 
 # end of file

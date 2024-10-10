@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include "logging-lib/logging.h"
+#include <stdlib.h>
 #include <string.h>
 
 
@@ -90,9 +91,9 @@ string_join (char **array, size_t n, char *seperator)
 
     for (size_t i = 0; i < n; i++)
     {
-        (void)strcat (dest, array[i]);
+        (void)strcat_s (dest, dest_len, array[i]);
 
-        if ((i + 1) < n) (void)strcat (dest, seperator);
+        if ((i + 1) < n) (void)strcat_s (dest, dest_len, seperator);
     }
 
     return dest;

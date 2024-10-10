@@ -41,7 +41,7 @@ void
 log_file (const char *filename, char *msg)
 {
     FILE *fp = NULL;
-    fp = fopen (filename, "a+");
+    (void)fopen_s (&fp, filename, "a+");
     if (!fp) return;
 
     (void)fprintf (fp, "%s\n", msg);

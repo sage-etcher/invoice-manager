@@ -1,8 +1,8 @@
 
 #include "database.h"
 
-#include "logging-lib/logging.h"
-#include "mystring-lib/mystring.h"
+#include <logging-lib/logging.h>
+#include <mystring-lib/mystring.h>
 #include <sqlite3.h>
 #include <stdio.h>
 #include <stdlib.h>

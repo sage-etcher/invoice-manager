@@ -2,7 +2,7 @@
 #include "mystring.h"
 
 #include <ctype.h>
-#include "logging-lib/logging.h"
+#include <logging-lib/logging.h>
 #include <stdlib.h>
 #include <string.h>
 

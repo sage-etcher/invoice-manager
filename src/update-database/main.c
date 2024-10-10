@@ -1,8 +1,8 @@
 
-#include "database-lib/database.h"
-#include "logging-lib/logging.h"
-#include "myfileio-lib/myfileio.h"
-#include "mystring-lib/mystring.h"
+#include <database-lib/database.h>
+#include <logging-lib/logging.h>
+#include <myfileio-lib/myfileio.h>
+#include <mystring-lib/mystring.h>
 #include "parser.h"
 #include <stdlib.h>
 

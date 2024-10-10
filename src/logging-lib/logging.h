@@ -13,6 +13,18 @@ extern FILE *g_debug;
 extern FILE *g_warning;
 extern FILE *g_error;
 
+/* logging mode definitions  */
+typedef enum
+{
+    LOG_UNINITIALIZED,
+    LOG_SILENT,
+    LOG_ERRORS_ONLY,
+    LOG_TERSE,
+    LOG_VERBOSE,
+    LOG_DEBUG,
+} logging_mode_t;
+
+
 /* format should always be an implicit c compile time constant for the 
  * "warning: " and "error: " prefixes to work properly */
 #define log_info(...)    (void)((!g_info)    || (fprintf (g_info, __VA_ARGS__)))
@@ -27,11 +39,20 @@ extern FILE *g_error;
 }
 
 
-/* initialize loggging streams for custom printf macros */
-void logging_init (void);
-void logging_quit (void);
 
-void log_file (const char *filename, char *msg);
+
+void logging_init (logging_mode_t mode, char *logfilepath);
+void logging_quit (void);
+logging_mode_t logging_get_mode (void);
+
+int   logging_init_file (char *logfilepath);
+int   logging_quit_file (void);
+char *logging_get_filepath (void);
+
+void log_file (char *msg);
+void log_implicit_file (const char *filefilepath, char *msg);
+
+
 
 #endif /* header guard */
 /* end of file */

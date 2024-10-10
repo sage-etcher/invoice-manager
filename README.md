@@ -12,7 +12,7 @@
 
 using Powershell and CMake
 
-~~~
+~~~Powershell
 $env:SQLite3_ROOT = "<Path to SQLite3 Install Directory>"
 $env:PCRE2_ROOT   = "<Path to PCRE2 Install Directory>"
 mkdir build
@@ -23,7 +23,7 @@ cmake --install .
 
 ### Unix
 
-~~~
+~~~bash
 mkdir build
 cmake ..
 cmake --build .

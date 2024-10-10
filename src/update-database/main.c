@@ -14,7 +14,6 @@ main (int argc, char **argv)
     parsed_t *invoice;
     sqlite3 *db = NULL;
 
-    /* const char *db_file = "/var/db/invoice-manager/core.db"; */
     const char *db_file = "core.db";
     const char *badfileslog_file = "badfiles.log";
     
@@ -24,8 +23,6 @@ main (int argc, char **argv)
         log_error ("Failed to initialize parser\n");
         goto main_exit_logging;
     }
-    //g_debug = NULL;
-    //g_verbose = NULL;
 
     db = database_init (db_file);
     if (db == NULL)
@@ -33,10 +30,6 @@ main (int argc, char **argv)
         log_error ("Failed to initialize database\n");
         goto main_exit_parser;
     }
-
-    /* g_debug = NULL; */
-
-    char *customer_name = NULL;
 
     while ((filepath = readline (stdin)))
     {

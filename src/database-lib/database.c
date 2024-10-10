@@ -203,7 +203,7 @@ static size_t
 prepare_sqlite_stmts (sqlite3 *db, const char **stmt_texts, 
                       sqlite3_stmt **stmts, size_t n)
 {
-    int retcode;
+    int retcode = SQLITE_OK;    /* if no statements are proviced, assume OK */
     size_t i = 0;
 
     char *tail= NULL;

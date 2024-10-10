@@ -67,7 +67,7 @@ compile_pattern_arr (const char **pattern_text_arr, size_t n, pcre2_code **compi
     int errornumber;
     PCRE2_SIZE erroroffset;
 
-    for (size_t i = 0; i < RE_COUNT; i++)
+    for (size_t i = 0; i < n; i++)
     {
         compiled_out[i] = pcre2_compile (
                 (PCRE2_SPTR)pattern_text_arr[i],
@@ -113,7 +113,6 @@ preform_regex_match (char *filename)
     static parsed_t s_result;
 
     pcre2_code *re = NULL;
-    PCRE2_SIZE erroroffset = 0;
     PCRE2_SIZE *ovector = NULL;
     pcre2_match_data *match_data = NULL;
 
@@ -168,11 +167,11 @@ preform_regex_match (char *filename)
         return NULL;
     }
 
-    re_group (s_result.name_raw, MAX_PARSED_NAME,  filename, ovector, GROUP_NAME);
-    re_group (s_result.group_a, 2, filename, ovector, GROUP_DATE_A);
-    re_group (s_result.group_b, 2, filename, ovector, GROUP_DATE_B);
-    re_group (s_result.group_c, 2, filename, ovector, GROUP_DATE_C);
-    re_group (s_result.group_d, 2, filename, ovector, GROUP_DATE_D);
+    re_group (s_result.name_raw, MAX_PARSED_NAME, (PCRE2_SPTR8)filename, ovector, GROUP_NAME);
+    re_group (s_result.group_a, 2, (PCRE2_SPTR8)filename, ovector, GROUP_DATE_A);
+    re_group (s_result.group_b, 2, (PCRE2_SPTR8)filename, ovector, GROUP_DATE_B);
+    re_group (s_result.group_c, 2, (PCRE2_SPTR8)filename, ovector, GROUP_DATE_C);
+    re_group (s_result.group_d, 2, (PCRE2_SPTR8)filename, ovector, GROUP_DATE_D);
     
     pcre2_match_data_free (match_data);
     return &s_result;

@@ -138,6 +138,7 @@ static int exec_select_invoice (sqlite3 *db, sqlite3_stmt *stmt, int retry_count
 static db_invoice_item_t *get_invoice_item (sqlite3_stmt *stmt);
 static void *get_invoice_item_callback (sqlite3_stmt *stmt);
 
+
 static void
 log_sqlite_error (sqlite3 *db)
 {
@@ -347,7 +348,7 @@ int
 database_insert_invoice (sqlite3 *db, char *filepath, char *customer_name, 
                          int year, int month, int day)
 {
-    int retcode = 0;
+    int retcode = 1;
 
     sqlite3_stmt *stmt = s_stmts[STMT_INSERT];
 
@@ -377,8 +378,49 @@ database_insert_invoice (sqlite3 *db, char *filepath, char *customer_name,
         goto database_insert_invoice_exit;
     } 
 
-    retcode = 1;
+    retcode = 0;
 database_insert_invoice_exit:
+    (void)sqlite3_reset (stmt);
+    return retcode;
+}
+
+
+int 
+database_update_invoice (sqlite3 *db, char *filepath, char *customer_name, 
+                         int year, int month, int day)
+{
+    int retcode = 1;
+
+    sqlite3_stmt *stmt = s_stmts[STMT_UPDATE_BY_FILEPATH];
+
+    int date = generate_date (year, month, day);
+    int error_flag = ((day == 0) || (month == 0) || (year == 0));
+
+    int ret_filepath = SQLITE_BIND_NAME (stmt, ":FILEPATH", filepath);
+    int ret_customer = SQLITE_BIND_NAME (stmt, ":CUSTOMER", customer_name);
+    int ret_error    = SQLITE_BIND_NAME (stmt, ":ERROR", error_flag);
+    int ret_year     = SQLITE_BIND_NAME_OR_NULL (stmt, ":YEAR",  year);
+    int ret_month    = SQLITE_BIND_NAME_OR_NULL (stmt, ":MONTH", month);
+    int ret_day      = SQLITE_BIND_NAME_OR_NULL (stmt, ":DAY",   day);
+    int ret_date     = SQLITE_BIND_NAME_OR_NULL (stmt, ":DATE",  date);
+
+    if (SQLITE_OK != (ret_filepath | ret_customer | ret_year | ret_month
+                      | ret_day | ret_date | ret_error))
+    {
+        log_sqlite_error (db);
+        log_error ("SQLite3: failed to bind value\n");
+        goto database_update_invoice_exit;
+    }
+
+    if (db_execute (db, stmt, 3, NULL, NULL) != SQLITE_DONE)
+    {
+        log_sqlite_error (db);
+        log_error ("SQLite3: execution failed\n");
+        goto database_update_invoice_exit;
+    } 
+
+    retcode = 0;
+database_update_invoice_exit:
     (void)sqlite3_reset (stmt);
     return retcode;
 }

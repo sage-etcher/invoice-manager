@@ -25,6 +25,9 @@ void database_quit (sqlite3 *db);
 int database_insert_invoice (sqlite3 *db, char *filepath, char *customer_name, 
                              int year, int month, int day);
 
+int database_update_invoice (sqlite3 *db, char *filepath, char *customer_name, 
+                             int year, int month, int day);
+
 int database_search_by_file (sqlite3 *db, char *filepath, db_invoice_item_t **ret_invoice);
 
 #endif

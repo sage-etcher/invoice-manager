@@ -1,10 +1,17 @@
 
+#include "cli-interface.h"
 #include <database-lib/database.h>
 #include <logging-lib/logging.h>
 #include <myfileio-lib/myfileio.h>
 #include <mystring-lib/mystring.h>
 #include "parser.h"
+#include "settings.h"
 #include <stdlib.h>
+
+
+static int bad_date (int year, int month, int day);
+static int update_database_with_file (sqlite3 *db, char *filepath, char *name, 
+                                      int year, int month, int day);
 
 
 int
@@ -14,22 +21,24 @@ main (int argc, char **argv)
     parsed_t *invoice;
     sqlite3 *db = NULL;
 
-    const char *db_file = "core.db";
-    const char *badfileslog_file = "badfiles.log";
-    
-    logging_init ();
+    settings_load_defaults ();
+    (void)cli_parse_arguements (argc, argv);
+
+    logging_init (g_set_logging_mode, g_set_badfilelog);
+
     if (parser_init () != 0)
     {
         log_error ("Failed to initialize parser\n");
         goto main_exit_logging;
     }
 
-    db = database_init (db_file);
+    db = database_init (g_set_database);
     if (db == NULL)
     {
         log_error ("Failed to initialize database\n");
         goto main_exit_parser;
     }
+
 
     while ((filepath = readline (stdin)))
     {
@@ -41,32 +50,19 @@ main (int argc, char **argv)
 
         /* parse the line as a filepath */
         invoice = parse_path (filepath);
-        if (invoice == NULL) 
+
+        /* if there is an issue with the parse */
+        if ((invoice == NULL) ||
+            (bad_date (invoice->year, invoice->month, invoice->day)))
         {
             log_warning ("Skipping Bad File: '%s'\n", filepath);
-            log_file (badfileslog_file, filepath);
+            log_file (filepath);
             continue;
         }
 
-        /* skip file if it already exists in database */
-        if (database_search_by_file (db, filepath, NULL)) 
-        {
-            log_verbose ("File already cached: '%s'\n", filepath);
-            continue;
-        }
-
-        if ((invoice->day == 0) || (invoice->month == 0) || (invoice->year == 0))
-        {
-            log_warning ("Bad Date in file: '%s'\n", filepath);
-            log_file (badfileslog_file, filepath);
-        }
-
-        /* add new file into the database */
-        if (!database_insert_invoice (db, filepath, invoice->name, 
-                    invoice->year, invoice->month, invoice->day))
-        {
-            log_error ("Failed to insert file: '%s'\n", filepath);
-        }
+        /* update the database */
+        (void)update_database_with_file (db, filepath, invoice->name, 
+                invoice->year, invoice->month, invoice->day);
     }
 
 
@@ -80,4 +76,46 @@ main_exit_logging:
     exit (EXIT_SUCCESS);
 }
 
+
+static int
+bad_date (int year, int month, int day)
+{
+    return ((year  == 0) || 
+            (month == 0) || 
+            (day   == 0));
+}
+
+
+static int
+update_database_with_file (sqlite3 *db, char *filepath, char *name, int year, 
+                           int month, int day)
+{
+    int file_cached = database_search_by_file (db, filepath, NULL);
+    int retcode;
+
+    if ((file_cached) && (g_set_ignore_cached))
+    {
+        log_warning ("File already cached: '%s'\n", filepath);
+        return 0;
+    }
+
+    if (file_cached) 
+    {
+        retcode = database_update_invoice (db, filepath, name, year, month, 
+                                           day);
+    }
+    else
+    {
+        retcode = database_insert_invoice (db, filepath, name, year, month, 
+                                           day);
+    }
+
+    if (retcode)
+    {
+        log_verbose ("Failed to update the database: '%s'\n", filepath);
+        return 1;
+    }
+
+    return 0;
+}
 

@@ -18,6 +18,7 @@ add_subdirectory(logging-lib)
 add_subdirectory(myfileio-lib)
 add_subdirectory(mystring-lib)
 add_subdirectory(database-lib)
+add_subdirectory(hemlock-argparser-lib)
 
 add_subdirectory(update-database)
 

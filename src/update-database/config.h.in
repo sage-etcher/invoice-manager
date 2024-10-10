@@ -1,0 +1,79 @@
+#ifndef CMAKE_CONFIG_IN_HEADER
+#define CMAKE_CONFIG_IN_HEADER
+
+enum
+{
+    CONFIG_DEF_TERSE,
+    CONFIG_DEF_VERBOSE,
+    CONFIG_DEF_DEBUG,
+    CONFIG_DEF_SKIP_CACHED,
+    CONFIG_DEF_DONTSKIP_CACHED,
+    CONFIG_DEF_DRYRUN,
+    CONFIG_DEF_LIVERUN,
+};
+
+#cmakedefine CONFIG_LOGGING_MODE  @CONFIG_LOGGING_MODE@
+#cmakedefine CONFIG_SKIP_CACHE    @CONFIG_SKIP_CACHE@
+#cmakedefine CONFIG_DRYRUN        @CONFIG_DRYRUN@
+#cmakedefine CONFIG_DATABASE     "@CONFIG_DATABASE@"
+#cmakedefine CONFIG_BADFILELOG   "@CONFIG_BADFILELOG@"
+
+#cmakedefine CMAKE_PROJECT_NAME "@CMAKE_PROJECT_NAME@"
+#cmakedefine PROJECT_NAME       "@PROJECT_NAME@"
+#cmakedefine PROJECT_VERSION    "@PROJECT_VERSION@"
+
+#define COPYRIGHT_YEAR "2024"
+
+
+/* logging mode */
+#ifndef CONFIG_LOGGING_MODE
+#   define DEFAULT_LOGGING_MODE LOG_TERSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_TERSE
+#   define DEFAULT_LOGGING_MODE LOG_TERSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_VERBOSE
+#   define DEFAULT_LOGGING_MODE LOG_VERBOSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_DEBUG
+#   define DEFAULT_LOGGING_MODE LOG_DEBUG
+#else
+#   error "cannot assign DEFAULT_LOGGING_MODE"
+#endif
+
+/* skip cache */
+#ifndef CONFIG_SKIP_CACHE
+#   define DEFAULT_IGNORE_CACHED 1
+#elif CONFIG_SKIP_CACHE == CONFIG_DEF_SKIP_CACHE
+#   define DEFAULT_IGNORE_CACHED 1
+#elif CONFIG_SKIP_CACHE == CONFIG_DEF_DONTSKIP_CACHE
+#   define DEFAULT_IGNORE_CACHED 0
+#else
+#   error "cannot assign DEFAULT_IGNORE_CACHED"
+#endif
+
+/* dry run */
+#ifndef CONFIG_DRYRUN 
+#   define DEFAULT_DRYRUN 0
+#elif CONFIG_DRYRUN == CONFIG_DEF_DRYRUN,
+#   define DEFAULT_DRYRUN 1
+#elif CONFIG_DRYRUN == CONFIG_DEF_LIVERUN,
+#   define DEFAULT_DRYRUN 0
+#else
+#   error "cannot assign DEFAULT_DRYRUN"
+#endif
+
+/* database */
+#ifdef CONFIG_DATABASE
+#   define DEFAULT_DATABASE CONFIG_DATABASE
+#else
+#   define DEFAULT_DATABASE "invoice-database.db"
+#endif
+
+/* badfile */
+#ifdef CONFIG_BADFILELOG 
+#   define DEFAULT_BADFILELOG CONFIG_BADFILELOG
+#else
+#   define DEFAULT_BADFILELOG "badfiles.log"
+#endif
+
+
+#endif /* header guard */
+/* end of file */

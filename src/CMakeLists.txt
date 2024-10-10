@@ -16,10 +16,16 @@ add_subdirectory(update-database)
 
 #add_subdirectory(testing)
 
-if (WIN32)
+if(WIN32)
     add_subdirectory(windows-scripts)
 else()
     add_subdirectory(gnu-scripts)
+endif()
+
+if(MSVC)
+    add_compile_options(/W4)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 

@@ -16,6 +16,7 @@ using Powershell and CMake
 $env:SQLite3_ROOT = "<Path to SQLite3 Install Directory>"
 $env:PCRE2_ROOT   = "<Path to PCRE2 Install Directory>"
 mkdir build
+cd build
 cmake ..
 cmake --build .
 cmake --install .
@@ -25,6 +26,7 @@ cmake --install .
 
 ~~~bash
 mkdir build
+cd build
 cmake ..
 cmake --build .
 cmake --install .

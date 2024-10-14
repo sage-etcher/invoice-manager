@@ -1,12 +1,19 @@
 
+cmake_minimum_required(VERSION 3.14)
 project(invoice-generate-site VERSION 0.1 LANGUAGES C)
 
+
+configure_file(config.h.in config.h)
 add_executable(invoice-generate-site 
     main.c
+    settings.c
+    cli-interface.c
 )
 
 target_link_libraries(invoice-generate-site PRIVATE
     invoice-database-lib
+    invoice-myfileio-lib
+    invoice-mystring-lib
     invoice-logging-lib
     hemlock-argparser-lib
     "${SQlite3_LIBRARIES}" 

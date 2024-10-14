@@ -24,7 +24,7 @@ add_subdirectory(update-database)
 
 #add_subdirectory(invoice-gen-site)
 
-#add_subdirectory(testing)
+add_subdirectory(testing)
 
 if(WIN32)
     add_subdirectory(windows-scripts)

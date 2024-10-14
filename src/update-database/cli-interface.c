@@ -19,8 +19,8 @@ cli_parse_arguements (int argc, char **argv)
 {
     const enum 
     {
-        OVERWRITE = CONARG_ID_CUSTOM,
-        SKIP_CACHED,
+        DISABLE_CACHE = CONARG_ID_CUSTOM,
+        ENABLE_CACHE,
         DRYRUN,
         DATABASE,
         BADFILELOG,
@@ -32,18 +32,19 @@ cli_parse_arguements (int argc, char **argv)
     };
     const conarg_t ARG_LIST[] = {
 
-        { OVERWRITE,   NULL, "--no-cache",   CONARG_PARAM_NONE },
-        { SKIP_CACHED, NULL, "--skip-cached", CONARG_PARAM_NONE },
-        { DRYRUN,      NULL, "--dryrun",      CONARG_PARAM_NONE },
-        { DATABASE,    "-d", "--database",    CONARG_PARAM_REQUIRED },
-        { BADFILELOG,  "-l", "--badfilelog",  CONARG_PARAM_REQUIRED },
+        { DATABASE,      "-d", "--database",    CONARG_PARAM_REQUIRED },
+        { BADFILELOG,    "-l", "--badfilelog",  CONARG_PARAM_REQUIRED },
+        
+        { DISABLE_CACHE, NULL, "--disable-cache", CONARG_PARAM_NONE },
+        { ENABLE_CACHE,  NULL, "--enable-cache",  CONARG_PARAM_NONE },
+        { DRYRUN,        NULL, "--dryrun",        CONARG_PARAM_NONE },
 
-        { DEBUG,       NULL, "--debug",       CONARG_PARAM_NONE },
-        { VERBOSE,     "-v", "--verbose",     CONARG_PARAM_NONE },
-        { TERSE,       "-t", "--terse",       CONARG_PARAM_NONE },
+        { DEBUG,         NULL, "--debug",       CONARG_PARAM_NONE },
+        { VERBOSE,       "-v", "--verbose",     CONARG_PARAM_NONE },
+        { TERSE,         "-t", "--terse",       CONARG_PARAM_NONE },
 
-        { HELP,        "-h", "--help",        CONARG_PARAM_NONE },
-        { VERSION,     "-V", "--version",     CONARG_PARAM_NONE },
+        { HELP,          "-h", "--help",        CONARG_PARAM_NONE },
+        { VERSION,       "-V", "--version",     CONARG_PARAM_NONE },
     };
     const size_t ARG_COUNT = LEN (ARG_LIST);
     
@@ -58,11 +59,11 @@ cli_parse_arguements (int argc, char **argv)
 
         switch (id)
         {
-        case SKIP_CACHED:
+        case ENABLE_CACHE:
             g_set_ignore_cached = 1;
             break;
 
-        case OVERWRITE:
+        case DISABLE_CACHE:
             g_set_ignore_cached = 0;
             break;
 
@@ -143,8 +144,8 @@ help_page (FILE *stream)
         "  -d, --database FILEPATH     use an alternative database file\n"
         "  -l, --badfilelog FILEPATH   output bad files to an alternate file\n"
         "      --dryrun                dont update the database\n"
-        "      --skip-cached           skip files already cached in the database\n"
-        "      --no-cache              update all files, ignoring weather they are\n"
+        "      --enable-cache          skip files already cached in the database\n"
+        "      --disable-cache         update all files, ignoring weather they are\n"
         "                                cached or not (verry slow)\n"
         "  -t, --terse                 show minimal output/information\n"
         "  -v, --verbose               show more details and warnings at runtime\n"

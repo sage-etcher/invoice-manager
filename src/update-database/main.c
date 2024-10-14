@@ -13,7 +13,6 @@ static int bad_date (int year, int month, int day);
 static int update_database_with_file (sqlite3 *db, char *filepath, char *name, 
                                       int year, int month, int day);
 
-
 int
 main (int argc, char **argv)
 {
@@ -25,6 +24,12 @@ main (int argc, char **argv)
     (void)cli_parse_arguements (argc, argv);
 
     logging_init (g_set_logging_mode, g_set_badfilelog);
+    
+    log_debug ("logging mode: %d\n",  g_set_logging_mode);
+    log_debug ("cache: %s\n",         (g_set_ignore_cached ? "enabled" : "disabled"));
+    log_debug ("dryrun: %s\n",        (g_set_dryrun ? "true" : "false"));
+    log_debug ("database: '%s'\n",    g_set_database);
+    log_debug ("badfilelog: '%s'\n",  g_set_badfilelog);
 
     if (parser_init () != 0)
     {
@@ -32,13 +37,12 @@ main (int argc, char **argv)
         goto main_exit_logging;
     }
 
-    db = database_init (g_set_database);
+    db = database_init (g_set_database, g_set_dryrun);
     if (db == NULL)
     {
         log_error ("Failed to initialize database\n");
         goto main_exit_parser;
     }
-
 
     while ((filepath = readline (stdin)))
     {
@@ -55,7 +59,7 @@ main (int argc, char **argv)
         if ((invoice == NULL) ||
             (bad_date (invoice->year, invoice->month, invoice->day)))
         {
-            log_warning ("Skipping Bad File: '%s'\n", filepath);
+            log_error ("Skipping Bad File: '%s'\n", filepath);
             log_file (filepath);
             continue;
         }
@@ -101,11 +105,13 @@ update_database_with_file (sqlite3 *db, char *filepath, char *name, int year,
 
     if (file_cached) 
     {
+        log_debug ("updating cached invoice: '%s'\n", filepath);
         retcode = database_update_invoice (db, filepath, name, year, month, 
                                            day);
     }
     else
     {
+        log_debug ("inserting new invoice: '%s'\n", filepath);
         retcode = database_insert_invoice (db, filepath, name, year, month, 
                                            day);
     }

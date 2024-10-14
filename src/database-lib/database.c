@@ -124,7 +124,10 @@ typedef struct
 
 
 static void log_sqlite_eror (sqlite3 *db);
-static sqlite3 *open_sqlite_db (const char *dbfile);
+static void log_sqlite_errorcode (int errcode);
+
+static sqlite3 *open_sqlite_db (const char *dbfile, int flags);
+static sqlite3 *open_sqlite_dryrun (const char *dbfile, int flags);
 static int close_sqlite_db (sqlite3 *db);
 static size_t prepare_sqlite_stmts (sqlite3 *db, const char **stmt_texts, 
                                     sqlite3_stmt **stmts, size_t n);
@@ -143,6 +146,14 @@ static void
 log_sqlite_error (sqlite3 *db)
 {
     int errcode = (!db ? SQLITE_NOMEM : sqlite3_errcode (db));
+    log_sqlite_errorcode (errcode);
+
+    return;
+}
+
+static void
+log_sqlite_errorcode (int errcode)
+{
     const char *errmsg = sqlite3_errstr (errcode);
 
     log_error ("SQLite3 Error: %d: %s\n", errcode, errmsg);
@@ -152,14 +163,17 @@ log_sqlite_error (sqlite3 *db)
 
 
 static sqlite3 *
-open_sqlite_db (const char *dbfile)
+open_sqlite_db (const char *dbfile, int flags)
 {
     sqlite3 *db = NULL;
+
+    /* null guard */
+    if (dbfile == NULL) return NULL;
 
     log_verbose ("Opening database at \"%s\"\n", dbfile);
 
     /* open database file */
-    if (sqlite3_open (dbfile, &db) != SQLITE_OK)
+    if (sqlite3_open_v2 (dbfile, &db, flags, NULL) != SQLITE_OK)
     {
         log_sqlite_error (db);
         log_error ("Failed to open database\n");
@@ -293,15 +307,16 @@ create_initial_database_contexts (sqlite3 *db)
 
 
 sqlite3 *
-database_init (const char *dbfile)
+database_init (const char *dbfile, int dryrun)
 {
     sqlite3 *db = NULL;
-
-    /* null guard */
-    if (dbfile == NULL) return NULL;
+    const int NORMAL_FLAGS = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    const int MEMORY_FLAGS = NORMAL_FLAGS | SQLITE_OPEN_MEMORY;
 
     /* open the database */
-    db = open_sqlite_db (dbfile);
+    if (dryrun) db = open_sqlite_dryrun (dbfile, MEMORY_FLAGS); 
+    else        db = open_sqlite_db     (dbfile, NORMAL_FLAGS);
+
     if (db == NULL) return NULL;
 
     /* create the tables (virutal only). table definitions are required to 
@@ -318,6 +333,63 @@ database_init (const char *dbfile)
     }
 
     return db;
+}
+
+
+static sqlite3 *
+open_sqlite_dryrun (const char *dbfile, int flags)
+{
+    sqlite3_backup *backup = NULL;
+    sqlite3 *src = NULL;
+    sqlite3 *dst = NULL;
+
+    const int READONLY_FLAGS = SQLITE_OPEN_READONLY;
+
+    /* log verbose */
+    log_verbose ("Creating a RAM backup of database\n");
+
+    /* open the dest database as in memory readwrite */
+    const char *tmp_filename = tmpnam (NULL);
+    if (tmp_filename == NULL) return NULL;
+    dst = open_sqlite_db (tmp_filename, flags);
+    if (dst == NULL) return NULL;
+
+    /* dont try an copy any data over if dbfile is NULL */
+    if (dbfile == NULL) 
+    {
+        log_debug ("no src database exists, using memory only\n");
+        return dst;
+    }
+
+    /* open source database as readonly */
+    src = open_sqlite_db (dbfile, READONLY_FLAGS);
+    if (src == NULL) goto open_sqlite_dryrun_exit_failure;
+
+    /* copy from src to dst */
+    backup = sqlite3_backup_init (dst, "main", src, "main");
+    if (backup == NULL) 
+    {
+        log_sqlite_error (dst);
+        log_error ("failed to initialize the backup\n");
+        goto open_sqlite_dryrun_exit_failure;
+    }
+
+    if (sqlite3_backup_step (backup, -1) != SQLITE_DONE)
+    {
+        log_sqlite_error (dst);
+        log_error ("failed to step through backup\n");
+        goto open_sqlite_dryrun_exit_failure;
+    }
+
+    /* exit */
+open_sqlite_dryrun_exit:
+    (void)sqlite3_backup_finish (backup); backup = NULL;
+    (void)close_sqlite_db (src); src = NULL;
+    return dst;
+
+open_sqlite_dryrun_exit_failure:
+    (void)close_sqlite_db (dst); dst = NULL;
+    goto open_sqlite_dryrun_exit;
 }
 
 

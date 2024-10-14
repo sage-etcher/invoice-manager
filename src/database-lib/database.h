@@ -19,7 +19,7 @@ typedef struct
 } db_invoice_item_t;
 
 
-sqlite3 *database_init (const char *dbfile);
+sqlite3 *database_init (const char *dbfile, int dryrun);
 void database_quit (sqlite3 *db);
 
 int database_insert_invoice (sqlite3 *db, char *filepath, char *customer_name, 

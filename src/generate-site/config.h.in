@@ -1,0 +1,71 @@
+#ifndef CMAKE_CONFIG_IN_HEADER
+#define CMAKE_CONFIG_IN_HEADER
+
+enum
+{
+    CONFIG_DEF_TERSE,
+    CONFIG_DEF_VERBOSE,
+    CONFIG_DEF_DEBUG,
+};
+
+#cmakedefine CONFIG_LOGGING_MODE  @CONFIG_LOGGING_MODE@
+#cmakedefine CONFIG_DATABASE     "@CONFIG_DATABASE@"
+#cmakedefine CONFIG_FORMAT_FILE  "@CONFIG_FORMAT_FILE@"
+#cmakedefine CONFIG_SECTION_NAME "@CONFIG_SECTION_NAME@"
+#cmakedefine DEFAULT_SQLQUERY    "@CONFIG_SQLQUERY@"
+
+#cmakedefine CMAKE_PROJECT_NAME "@CMAKE_PROJECT_NAME@"
+#cmakedefine PROJECT_NAME       "@PROJECT_NAME@"
+#cmakedefine PROJECT_VERSION    "@PROJECT_VERSION@"
+
+#define COPYRIGHT_YEAR "2024"
+
+
+/* logging mode */
+#ifndef CONFIG_LOGGING_MODE
+#   define DEFAULT_LOGGING_MODE LOG_TERSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_TERSE
+#   define DEFAULT_LOGGING_MODE LOG_TERSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_VERBOSE
+#   define DEFAULT_LOGGING_MODE LOG_VERBOSE
+#elif CONFIG_LOGGING_MODE == CONFIG_DEF_DEBUG
+#   define DEFAULT_LOGGING_MODE LOG_DEBUG
+#else
+#   error "cannot assign DEFAULT_LOGGING_MODE"
+#endif
+
+
+/* database */
+#ifdef CONFIG_DATABASE
+#   define DEFAULT_DATABASE CONFIG_DATABASE
+#else
+#   define DEFAULT_DATABASE "invoice-database.db"
+#endif
+
+
+/* formtat file */
+#ifdef CONFIG_FORMAT_FILE
+#   define DEFAULT_FORMAT_FILE CONFIG_FORMAT_FILE
+#else
+#   define DEFAULT_FORMAT_FILE NULL
+#endif
+
+
+/* section name */
+#ifdef CONFIG_SECTION_NAME
+#   define DEFAULT_SECTION_NAME CONFIG_SECTION_NAME
+#else
+#   define DEFAULT_SECTION_NAME "Default Section"
+#endif
+
+
+/* sql query */
+#ifdef CONFIG_SQLQUERY
+#   define DEFAULT_SQLQUERY CONFIG_SQLQUERY
+#else
+#   define DEFAULT_SQLQUERY "SELECT * FROM invoices;"
+#endif
+
+
+#endif /* header guard */
+/* end of file */

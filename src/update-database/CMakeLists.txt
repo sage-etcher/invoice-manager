@@ -3,15 +3,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(invoice-update-database VERSION 0.1 LANGUAGES C)
 
-# find libraries 
-set(PCRE2_USE_STATIC_LIBS ON)
-find_package(PCRE2 CONFIG COMPONENTS 8BIT REQUIRED)
-find_package(SQLite3 REQUIRED)
-
-
 # configureation file
 configure_file(config.h.in config.h)
-
 
 # build/link exectuable
 add_executable(invoice-update-database

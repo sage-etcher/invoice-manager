@@ -3,10 +3,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(invoice-database VERSION 1.0 LANGUAGES C)
 
-# find libraries 
-find_package(SQLite3 REQUIRED)
-
-
 # build/link exectuable
 add_library(invoice-database-lib STATIC database.c)
 

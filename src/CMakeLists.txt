@@ -14,6 +14,13 @@ else()
 endif()
 
 
+# find global libraries 
+set(PCRE2_USE_STATIC_LIBS ON)
+find_package(PCRE2 CONFIG COMPONENTS 8BIT REQUIRED)
+find_package(SQLite3 REQUIRED)
+
+
+# add subdirectories
 add_subdirectory(logging-lib)
 add_subdirectory(myfileio-lib)
 add_subdirectory(mystring-lib)
@@ -21,8 +28,7 @@ add_subdirectory(database-lib)
 add_subdirectory(hemlock-argparser-lib)
 
 add_subdirectory(update-database)
-
-#add_subdirectory(invoice-gen-site)
+add_subdirectory(generate-site)
 
 add_subdirectory(testing)
 

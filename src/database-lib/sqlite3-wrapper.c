@@ -1,3 +1,12 @@
+/**
+ * @file
+ * @brief  A wrapper to extend the SQLite3 library.
+ * @author 
+ * @version
+ * @copyright MIT
+ * @sa <a href="https://">Wikipedia:Copyrights - Wikipedia</a>
+ */
+
 
 #include "sqlite3-wrapper.h"
 
@@ -9,21 +18,17 @@
 #include <string.h>
 
 
-/** Log a SQLite3 error by database handle.
+/** 
+ * Log an SQLite error via an open database.
  * 
- * Write a SQLite3 formatted error string using sqlite3_errstr() and 
- * log_error().
+ * Get the errorcode from the provided database handle then use 
+ * sqlwrap_log_errorcode() to log the error.
  * 
- * logging-lib must be initiallized; failure to do so will result in
- * the call being a harmless NOP.
+ * If a NULL pointer is provided, assume an implicit SQLITE_NOMEM errorcode. 
  * 
- * Calling with a NULL pointer assumes a SQLITE_NOMEM error.
+ * @param db an open sqlite database or NULL.  
  * 
- * @param db a SQLite3 database handle or NULL.
- * 
- * @see sqlwrap_log_errorcode()
- * @see log_error()
- * @see logging_init()
+ * @sa sqlwrap_log_errocode()
  */
 void
 sqlwrap_log_error (sqlite3 *db)
@@ -35,18 +40,15 @@ sqlwrap_log_error (sqlite3 *db)
 }
 
 
-/** Log a SQLite3 error by errorcode.
+/**
+ * Log an SQLite error via error code.
  * 
- * Write a SQLite3 formatted error string using sqlite3_errstr() and 
- * log_error().
+ * Get the error message from sqlite3_errstr(), then log the errorcode and 
+ * message using log_error().
  * 
- * logging-lib must be initiallized; failure to do so will result in
- * the call being a harmless NOP.
- * 
- * @param errocode a valid SQLite3 error code
- * 
- * @see log_error()
- * @see logging_init()
+ * @param errcode a valid sqlite error code.
+ 
+ * @sa log_error()
  */
 void
 sqlwrap_log_errorcode (int errcode)
@@ -59,24 +61,16 @@ sqlwrap_log_errorcode (int errcode)
 }
 
 
-/** Open a SQLite3 database connection.
+/**
+ * Open a sqlite3 database.
  * 
- * A wrapper around sqlite3_open_v2() with logging and error handling.
+ * A wrapper around sqlite3_open_v2() for opening a database with logging.
+ * When passed a NULL pointer, it is a is a harmless no-op.
  * 
- * The resulting database handle must be closed using sqlwrap_close() as to 
- * avoid a memory leak and potential loss of data.
+ * @param dbfile a filename to use for the database.
+ * @param flags a OR'd list of SQLITE_OPEN_* flags to use.
  * 
- * logging relies on logging-lib being initiallized. if uninitialized no 
- * information/warnings/errors will be logged.
- *
- * Calling with a NULL pointer is a harmless no-op
- *  
- * @param dbfile a valid filepath or ":memory:" for a temporary memory database.
- * @param flags an ORed combination of SQLITE_OPEN_* flags.
- * @return a valid sqlite3 database handle or on error NULL.
- * 
- * @see sqlwrap_close()
- * @see logging_init()
+ * @return the opened database on a success or NULL on a failure.
  */
 sqlite3 *
 sqlwrap_open (const char *dbfile, int flags)
@@ -105,28 +99,19 @@ sqlwrap_open (const char *dbfile, int flags)
 }
 
 
-/** Open a copy of a SQLite3 database.
- * 
- * Creates a backup of the requested database, using the provided flags. 
- * Intended use is to copy an existing database entirely into memory, which is 
- * often useful for dryruns and speed.
- * 
- * The resulting database handle must be closed using sqlwrap_close() as to 
- * avoid a memory leak.
- * 
- * logging relies on logging-lib being initiallized. if uninitialized no 
- * information/warnings/errors will be logged.
+/**
+ * Open a sqlite3 database as a temporary backup.
  *
- * Calling with a NULL pointer returns an empty database.
- *  
- * @param dbfile a valid existing database filepath or NULL.
- * @param flags an ORed combination of SQLITE_OPEN_* flags. for example:
- *              ~SQLITE_OPEN_MEMORY | SQLITE_OPEN_READWRITE~
- * @return a valid sqlite3 database handle or on error NULL.
+ * Create a backup of the database file using flags as the backup's open 
+ * permissions. Intended for use with in-memory databases.
  * 
- * @see sqlwrap_open()
- * @see sqlwrap_close()
- * @see logging_init()
+ * @param dbfile a database filename.
+ * @param flags an OR'd list of SQLITE_OPEN_* flags to use for the backup.
+ *
+ * @return the opened backup on a success or NULL on a failure.
+ * 
+ * @note this feels, klunky, like it should be refactored into a more consice 
+ *       function.
  */
 sqlite3 *
 sqlwrap_open_memory (const char *dbfile, int flags)
@@ -185,28 +170,20 @@ open_sqlite_dryrun_exit_failure:
 }
 
 
-/** Close a SQLite3 database connection.
+/** 
+ * Close a sqlite3 database. 
  * 
- * Close a SQLite3 database connection opened previously using any of the 
- * following: sqlwrap_open(), sqlwrap_open_memory().
+ * A wrapper around sqlite3_close() for closing a database with logging.
  * 
- * Logging relies on logging-lib being initiallized. if uninitialized no 
- * information/warnings/errors will be logged.
- *
- * Calling with a NULL pointer is a harmless no-op (if initialized, logging 
- * will still run).
- *  
- * @param db a valid sqlite3 handle or NULL.
- * @return SQLITE_OK on success, see sqlite3_close docs for other returns.
- * 
- * @see sqlwrap_open()
- * @see sqlwrap_open_memory()
- * @see logging_init()
- */
+ * @param db an open database handle.
+ * @return a dirrect pass-through from sqlite3_close().
+*/
 int 
 sqlwrap_close (sqlite3 *db)
 {
     int retcode;
+
+    /** @bug logs even on NULL */
 
     log_verbose ("Closing database\n");
 
@@ -228,29 +205,21 @@ sqlwrap_close (sqlite3 *db)
 }
 
 
-/** Prepare an array of n SQL Statements.
+/** Prepare an array of SQL statments. 
  * 
- * Use sqlite3_prepare_v2 to prepare up to n SQL Statments. Storing the 
- * compiled statements into stmts.
+ * Iterate through the stmt_texts array, prepare each statement, write the 
+ * returned statement into the stmts array, and log each step of the way.
  * 
- * On failure, all prepared statements are finalized and assigned NULL.
+ * If an error occurs, all prepared statements are destroyed and set to NULL.
  * 
- * Behavior is undefined if any pointer is NULL or if any array is smaller 
- * than n.
+ * @param db an open database.
+ * @param stmt_texts an array of raw SQL statement strings.
+ * @param stmts the result array of prepared statements.
+ * @param n the array lengths.
  * 
- * Logging relies on logging-lib being initiallized. if uninitialized no 
- * information/warnings/errors will be logged.
- *
- * @param db a valid sqlite3 handle or NULL.
- * @param stmt_texts an array of SQL Statements to prepare.
- * @param stmts an array of sqlite3_stmt objects, to output prepared 
- *              statements into.
- * @param n the number of elements to prepare.
+ * @return the number of iterations accomplished. Is equal to n on a success.
  * 
- * @return returns index to the last prepared statment. equal to n on success.
- * 
- * @see sqlwrap_open()
- * @see logging_init()
+ * @sa sqlwrap_finalize_n()
  */
 size_t 
 sqlwrap_prepare_n (sqlite3 *db, const char **stmt_texts, 
@@ -295,21 +264,14 @@ sqlwrap_prepare_n (sqlite3 *db, const char **stmt_texts,
 }
 
 
-/** Finalize an array of n SQL Statements.
+/**
+ * Finalize an array of SQL statements.
  * 
- * Use sqlite3_finalize to finalize up to n SQL Statments. After finalizing, 
- * each element of stmts is set to NULL.
+ * Iterate through the stmts array, finalize each element, set the element 
+ * to NULL, and log each step of the way.
  * 
- * Behavior is undefined if stmts is NULL. 
- * 
- * Logging relies on logging-lib being initiallized. if uninitialized no 
- * information/warnings/errors will be logged.
- *
- * @param stmts an array of prepared sqlite3_stmt pointers.
+ * @param stmts an array of prepared SQL statements.
  * @param n the array length.
- * 
- * @see sqlwrap_prepare_n()
- * @see logging_init()
  */
 void
 sqlwrap_finalize_n (sqlite3_stmt **stmts, size_t n)
@@ -321,7 +283,7 @@ sqlwrap_finalize_n (sqlite3_stmt **stmts, size_t n)
 
     for (i = 0; i < n; i++)
     {
-        /* TODO: fix memory leak when sqlite3_finalize fails. */
+        /** @bug memory leak if sqlite3_finalize fails. */
         retcode = sqlite3_finalize (stmts[i]);
         stmts[i] = NULL;
 

@@ -1,5 +1,6 @@
 #include "parser.h"
 
+#include <date-lib/date.h>
 #include <logging-lib/logging.h>
 #include <myfileio-lib/myfileio.h>
 #include <mystring-lib/mystring.h>
@@ -8,7 +9,6 @@
 #include <pcre2.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 
 enum
@@ -24,23 +24,11 @@ const char *G_PATTERNS_RAW[RE_COUNT] = {
 static pcre2_code *g_re_patterns[RE_COUNT];
 
 
-typedef struct 
-{
-    int year;
-    int month;
-    int day;
-} date_tuple_t;
-
-
 static void destroy_pattern_arr (pcre2_code **compiled_arr, size_t n);
 static int compile_pattern_arr (const char **pattern_text_arr, size_t n, pcre2_code **compiled_out);
 static void re_group (char *dst, size_t n, PCRE2_SPTR subject, PCRE2_SIZE *ovector, int i);
 
-static date_tuple_t groups_as_ddmm_yyyy (int a, int b, int c, int d);
-static date_tuple_t groups_as_mmdd_yyyy (int a, int b, int c, int d);
-static date_tuple_t groups_as_yyyy_mmdd (int a, int b, int c, int d);
 static date_tuple_t guess_date_format (char *a, char *b, char *c, char *d);
-static int validate_date (int year, int month, int day);
 
 
 int
@@ -223,42 +211,6 @@ re_group (char *dst, size_t n, PCRE2_SPTR subject, PCRE2_SIZE *ovector, int i)
 }
 
 
-static int
-validate_date (int year, int month, int day)
-{
-    time_t t = time (NULL);
-    struct tm *tm = localtime (&t);
-
-    const int DAYS_IN_MONTH[12]={31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-    /* future dates are not allowed */
-    if (!((year  < (tm->tm_year + 1900)) ||
-          (month < (tm->tm_mon  + 1)) ||
-          (day   < (tm->tm_mday))))
-    {
-        return 0;
-    }
-
-    /* too old/invalid range */
-    if (year < 1900) 
-    {
-        return 0;
-    }
-
-    if ((month > 12) || (month < 1)) 
-    {
-        return 0;
-    }
-
-    if ((day > DAYS_IN_MONTH[month - 1]) || (day < 1)) 
-    {
-        return 0;
-    }
-
-    /* true */
-    return 1;
-}
-
 
 static date_tuple_t
 guess_date_format (char *a, char *b, char *c, char *d)
@@ -270,11 +222,11 @@ guess_date_format (char *a, char *b, char *c, char *d)
 
     date_tuple_t date;
 
-    date = groups_as_yyyy_mmdd (ia, ib, ic, id);
-    if (validate_date (date.year, date.month, date.day)) return date;
+    date = date_yyyy_mmdd (ia, ib, ic, id);
+    if (date_validate(date.year, date.month, date.day)) return date;
 
-    date = groups_as_mmdd_yyyy (ia, ib, ic, id);
-    if (validate_date (date.year, date.month, date.day)) return date;
+    date = date_mmdd_yyyy (ia, ib, ic, id);
+    if (date_validate (date.year, date.month, date.day)) return date;
 
     /*
     date = groups_as_ddmm_yyyy (ia, ib, ic, id);
@@ -282,34 +234,4 @@ guess_date_format (char *a, char *b, char *c, char *d)
     */
 
     return (date_tuple_t){ .year = 0, .month = 0, .day = 0 };
-}
-
-static date_tuple_t
-groups_as_yyyy_mmdd (int a, int b, int c, int d)
-{
-    return (date_tuple_t){
-        .year  = ((a * 100) + (b * 1)),
-        .month = (c),
-        .day   = (d),
-    };
-}
-
-static date_tuple_t
-groups_as_mmdd_yyyy (int a, int b, int c, int d)
-{
-    return (date_tuple_t){
-        .month = (a),
-        .day   = (b),
-        .year  = ((c * 100) + (d * 1)),
-    };
-}
-
-static date_tuple_t
-groups_as_ddmm_yyyy (int a, int b, int c, int d)
-{
-    return (date_tuple_t){
-        .day   = (a),
-        .month = (b),
-        .year  = ((c * 100) + (d * 1)),
-    };
 }

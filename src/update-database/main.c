@@ -1,4 +1,5 @@
 
+#include <assert.h>
 #include "cli-interface.h"
 #include <database-lib/database.h>
 #include <logging-lib/logging.h>
@@ -8,6 +9,16 @@
 #include "settings.h"
 #include <stdlib.h>
 
+enum
+{
+    EXIT_OK,
+    EXIT_ERROR,
+    EXIT_FATAL,
+};
+
+static int main_init (sqlite3 **pdb);
+static void main_quit (sqlite3 *db);
+static int update_database (sqlite3 *db, FILE *input);
 
 static int bad_date (int year, int month, int day);
 static int update_database_with_file (sqlite3 *db, char *filepath, char *name, 
@@ -16,35 +27,85 @@ static int update_database_with_file (sqlite3 *db, char *filepath, char *name,
 int
 main (int argc, char **argv)
 {
-    char *filepath = NULL;
-    parsed_t *invoice;
+    int exitcode = EXIT_OK;
     sqlite3 *db = NULL;
 
-    settings_load_defaults ();
-    (void)cli_parse_arguements (argc, argv);
+    /* initialize all modules */
+    if (main_init (&db) == EXIT_FATAL) goto main_exit;
 
-    logging_init (g_set_logging_mode, g_set_badfilelog);
-    
+    /* load commandline options */
+    (void)cli_parse_arguements (argc, argv);
     log_debug ("logging mode: %d\n",  g_set_logging_mode);
     log_debug ("cache: %s\n",         (g_set_ignore_cached ? "enabled" : "disabled"));
     log_debug ("dryrun: %s\n",        (g_set_dryrun ? "true" : "false"));
     log_debug ("database: '%s'\n",    g_set_database);
     log_debug ("badfilelog: '%s'\n",  g_set_badfilelog);
 
+    /* iterate through each file updating the database */
+    int tmp = update_database (db, stdin);
+    if (tmp != EXIT_OK) exitcode = tmp;
+
+main_exit:
+    main_quit (db); 
+    db = NULL;
+
+    exit (exitcode);
+}
+
+
+static int  
+main_init (sqlite3 **pdb)
+{
+    sqlite3 *db = NULL;
+
+    assert (pdb != NULL);
+
+    /* init default settings module */ 
+    settings_load_defaults ();
+
+    /* initialize our logging system */
+    logging_init (g_set_logging_mode, g_set_badfilelog);
+
+    /* and the local parser */ 
     if (parser_init () != 0)
     {
         log_error ("Failed to initialize parser\n");
-        goto main_exit_logging;
+        return EXIT_FATAL;
     }
 
-    db = database_init (g_set_database, g_set_dryrun);
+    /* we also would like database access */
+    db = db_init (g_set_database, g_set_dryrun);
     if (db == NULL)
     {
         log_error ("Failed to initialize database\n");
-        goto main_exit_parser;
+        return EXIT_FATAL;
     }
 
-    while ((filepath = readline (stdin)))
+    /* and to return the database we get */
+    if (pdb) *pdb = db;
+    return EXIT_OK;
+}
+
+
+static void
+main_quit (sqlite3 *db)
+{
+    db_quit (db); db = NULL;
+    parser_quit ();
+    logging_quit ();
+
+    return;
+}
+
+
+static int
+update_database (sqlite3 *db, FILE *input)
+{
+    int exitcode = EXIT_OK;
+    char *filepath = NULL;
+    parsed_t *invoice;
+
+    while ((filepath = readline (input)))
     {
         if (filepath == NULL) continue;
 
@@ -61,6 +122,7 @@ main (int argc, char **argv)
         {
             log_error ("Skipping Bad File: '%s'\n", filepath);
             log_file (filepath);
+            exitcode = EXIT_ERROR;
             continue;
         }
 
@@ -69,15 +131,7 @@ main (int argc, char **argv)
                 invoice->year, invoice->month, invoice->day);
     }
 
-
-/* main_exit_database: */
-    database_quit (db); 
-    db = NULL;
-main_exit_parser:
-    parser_quit ();
-main_exit_logging:
-    logging_quit ();
-    exit (EXIT_SUCCESS);
+    return exitcode;
 }
 
 
@@ -94,7 +148,7 @@ static int
 update_database_with_file (sqlite3 *db, char *filepath, char *name, int year, 
                            int month, int day)
 {
-    int file_cached = database_search_by_file (db, filepath, NULL);
+    int file_cached = db_search_by_file (db, filepath, NULL);
     int retcode;
 
     if ((file_cached) && (g_set_ignore_cached))
@@ -106,13 +160,13 @@ update_database_with_file (sqlite3 *db, char *filepath, char *name, int year,
     if (file_cached) 
     {
         log_debug ("updating cached invoice: '%s'\n", filepath);
-        retcode = database_update_invoice (db, filepath, name, year, month, 
+        retcode = db_update_by_file (db, filepath, name, year, month, 
                                            day);
     }
     else
     {
         log_debug ("inserting new invoice: '%s'\n", filepath);
-        retcode = database_insert_invoice (db, filepath, name, year, month, 
+        retcode = db_insert (db, filepath, name, year, month, 
                                            day);
     }
 

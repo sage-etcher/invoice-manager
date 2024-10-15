@@ -23,7 +23,7 @@ main (int argc, char **argv)
     /* set the output file stream */
     if (g_set_output_file) 
     {
-        output = fopen (g_set_output_file, "a+");
+        (void)fopen_s (&output, g_set_output_file, "a+");
         if (output == NULL)
         {
             log_error ("cannot open output file: '%s'\n", g_set_output_file);
@@ -42,7 +42,7 @@ main (int argc, char **argv)
     log_debug ("output file: '%s'\n", g_set_output_file);
 
     /* open the database in memory (database dryrun mode) */
-    db = database_init (g_set_database, 1);
+    db = db_init (g_set_database, 1);
     if (db == NULL)
     {
         log_error ("Failed to initialze database\n");
@@ -53,7 +53,7 @@ main (int argc, char **argv)
 
 
 /* main_exit_database: */
-    database_quit (db); db = NULL;
+    db_quit (db); db = NULL;
 main_exit_output:
     (void)fclose (output); output = NULL;
     return 0;

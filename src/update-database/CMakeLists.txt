@@ -15,6 +15,7 @@ add_executable(invoice-update-database
 )
 
 target_link_libraries(invoice-update-database PRIVATE 
+        invoice-date-lib
         invoice-mystring-lib
         invoice-myfileio-lib
         invoice-logging-lib

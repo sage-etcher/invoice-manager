@@ -4,7 +4,10 @@ cmake_minimum_required(VERSION 3.14)
 project(invoice-database VERSION 1.0 LANGUAGES C)
 
 # build/link exectuable
-add_library(invoice-database-lib STATIC database.c)
+add_library(invoice-database-lib STATIC 
+        sqlite3-wrapper.c
+        database.c
+)
 
 target_include_directories(invoice-database-lib
         PRIVATE
@@ -17,6 +20,7 @@ target_include_directories(invoice-database-lib
 
 target_link_libraries(invoice-database-lib
         PRIVATE
+        invoice-date-lib
         invoice-mystring-lib
         invoice-logging-lib
 
@@ -24,3 +28,5 @@ target_link_libraries(invoice-database-lib
         "${SQLite3_LIBRARIES}"
 )
 
+target_compile_features(invoice-database-lib PRIVATE
+        )

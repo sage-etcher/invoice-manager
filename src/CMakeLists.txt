@@ -21,6 +21,7 @@ find_package(SQLite3 REQUIRED)
 
 
 # add subdirectories
+add_subdirectory(date-lib)
 add_subdirectory(logging-lib)
 add_subdirectory(myfileio-lib)
 add_subdirectory(mystring-lib)

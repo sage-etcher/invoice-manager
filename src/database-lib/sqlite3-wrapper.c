@@ -9,6 +9,22 @@
 #include <string.h>
 
 
+/** Log a SQLite3 error by database handle.
+ * 
+ * Write a SQLite3 formatted error string using sqlite3_errstr() and 
+ * log_error().
+ * 
+ * logging-lib must be initiallized; failure to do so will result in
+ * the call being a harmless NOP.
+ * 
+ * Calling with a NULL pointer assumes a SQLITE_NOMEM error.
+ * 
+ * @param db a SQLite3 database handle or NULL.
+ * 
+ * @see sqlwrap_log_errorcode()
+ * @see log_error()
+ * @see logging_init()
+ */
 void
 sqlwrap_log_error (sqlite3 *db)
 {
@@ -19,6 +35,19 @@ sqlwrap_log_error (sqlite3 *db)
 }
 
 
+/** Log a SQLite3 error by errorcode.
+ * 
+ * Write a SQLite3 formatted error string using sqlite3_errstr() and 
+ * log_error().
+ * 
+ * logging-lib must be initiallized; failure to do so will result in
+ * the call being a harmless NOP.
+ * 
+ * @param errocode a valid SQLite3 error code
+ * 
+ * @see log_error()
+ * @see logging_init()
+ */
 void
 sqlwrap_log_errorcode (int errcode)
 {
@@ -30,6 +59,25 @@ sqlwrap_log_errorcode (int errcode)
 }
 
 
+/** Open a SQLite3 database connection.
+ * 
+ * A wrapper around sqlite3_open_v2() with logging and error handling.
+ * 
+ * The resulting database handle must be closed using sqlwrap_close() as to 
+ * avoid a memory leak and potential loss of data.
+ * 
+ * logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * Calling with a NULL pointer is a harmless no-op
+ *  
+ * @param dbfile a valid filepath or ":memory:" for a temporary memory database.
+ * @param flags an ORed combination of SQLITE_OPEN_* flags.
+ * @return a valid sqlite3 database handle or on error NULL.
+ * 
+ * @see sqlwrap_close()
+ * @see logging_init()
+ */
 sqlite3 *
 sqlwrap_open (const char *dbfile, int flags)
 {
@@ -57,6 +105,29 @@ sqlwrap_open (const char *dbfile, int flags)
 }
 
 
+/** Open a copy of a SQLite3 database.
+ * 
+ * Creates a backup of the requested database, using the provided flags. 
+ * Intended use is to copy an existing database entirely into memory, which is 
+ * often useful for dryruns and speed.
+ * 
+ * The resulting database handle must be closed using sqlwrap_close() as to 
+ * avoid a memory leak.
+ * 
+ * logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * Calling with a NULL pointer returns an empty database.
+ *  
+ * @param dbfile a valid existing database filepath or NULL.
+ * @param flags an ORed combination of SQLITE_OPEN_* flags. for example:
+ *              ~SQLITE_OPEN_MEMORY | SQLITE_OPEN_READWRITE~
+ * @return a valid sqlite3 database handle or on error NULL.
+ * 
+ * @see sqlwrap_open()
+ * @see sqlwrap_close()
+ * @see logging_init()
+ */
 sqlite3 *
 sqlwrap_open_memory (const char *dbfile, int flags)
 {
@@ -114,6 +185,24 @@ open_sqlite_dryrun_exit_failure:
 }
 
 
+/** Close a SQLite3 database connection.
+ * 
+ * Close a SQLite3 database connection opened previously using any of the 
+ * following: sqlwrap_open(), sqlwrap_open_memory().
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * Calling with a NULL pointer is a harmless no-op (if initialized, logging 
+ * will still run).
+ *  
+ * @param db a valid sqlite3 handle or NULL.
+ * @return SQLITE_OK on success, see sqlite3_close docs for other returns.
+ * 
+ * @see sqlwrap_open()
+ * @see sqlwrap_open_memory()
+ * @see logging_init()
+ */
 int 
 sqlwrap_close (sqlite3 *db)
 {
@@ -139,6 +228,30 @@ sqlwrap_close (sqlite3 *db)
 }
 
 
+/** Prepare an array of n SQL Statements.
+ * 
+ * Use sqlite3_prepare_v2 to prepare up to n SQL Statments. Storing the 
+ * compiled statements into stmts.
+ * 
+ * On failure, all prepared statements are finalized and assigned NULL.
+ * 
+ * Behavior is undefined if any pointer is NULL or if any array is smaller 
+ * than n.
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * @param db a valid sqlite3 handle or NULL.
+ * @param stmt_texts an array of SQL Statements to prepare.
+ * @param stmts an array of sqlite3_stmt objects, to output prepared 
+ *              statements into.
+ * @param n the number of elements to prepare.
+ * 
+ * @return returns index to the last prepared statment. equal to n on success.
+ * 
+ * @see sqlwrap_open()
+ * @see logging_init()
+ */
 size_t 
 sqlwrap_prepare_n (sqlite3 *db, const char **stmt_texts, 
                    sqlite3_stmt **stmts, size_t n)
@@ -182,6 +295,22 @@ sqlwrap_prepare_n (sqlite3 *db, const char **stmt_texts,
 }
 
 
+/** Finalize an array of n SQL Statements.
+ * 
+ * Use sqlite3_finalize to finalize up to n SQL Statments. After finalizing, 
+ * each element of stmts is set to NULL.
+ * 
+ * Behavior is undefined if stmts is NULL. 
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * @param stmts an array of prepared sqlite3_stmt pointers.
+ * @param n the array length.
+ * 
+ * @see sqlwrap_prepare_n()
+ * @see logging_init()
+ */
 void
 sqlwrap_finalize_n (sqlite3_stmt **stmts, size_t n)
 {
@@ -192,6 +321,7 @@ sqlwrap_finalize_n (sqlite3_stmt **stmts, size_t n)
 
     for (i = 0; i < n; i++)
     {
+        /* TODO: fix memory leak when sqlite3_finalize fails. */
         retcode = sqlite3_finalize (stmts[i]);
         stmts[i] = NULL;
 
@@ -208,15 +338,44 @@ sqlwrap_finalize_n (sqlite3_stmt **stmts, size_t n)
 }
 
 
+/** Execute (step through) a prepared SQL Statement.
+ * 
+ * Execute a prepared SQL Statement, logging as it does. If SQLITE_ROW is 
+ * returned execute the provided callback and save the results in result_ptr.
+ * If the statement fails, retry up until retry_count times.
+ * 
+ * while result_ptr is NULL the callback's output is discarded.
+ * while callback_get_item is NULL all statement results are discarded. 
+ * 
+ * Behavior is undefined while db or stmt is NULL or unprepared. 
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * @param db the sqlite3 database handle associated with the statement.
+ * @param stmt the prepared statement to evaluate.
+ * @param retry_count if execution fails, retry n times.
+ * @param result_ptr a result pointer for the callback functions output.
+ * @param callback_get_item if the statement returns data, proccess the data
+ *                          within the provided callback funtion.
+ * 
+ * @return the result from sqlite3_step.
+ * 
+ * @see sqlwrap_open()
+ * @see sqlwrap_open_memory()
+ * @see sqlwrap_prepare_n()
+ * @see logging_init()
+ */
 int
-sqlwrap_execute (sqlite3 *db, sqlite3_stmt *stmt, int retry_count, void **result_ptr, void *(*callback_get_item)(sqlite3_stmt *))
+sqlwrap_execute (sqlite3 *db, sqlite3_stmt *stmt, int retry_count, 
+                 void **result_ptr, void *(*callback_get_item)(sqlite3_stmt *))
 {
     int sqlite_ret;
     void *result = NULL;
 
     while (((sqlite_ret = sqlite3_step (stmt)) == SQLITE_BUSY) && (retry_count > 0))
     {
-        log_warning ("SQLite2: cannot execute statment, database is busy. Retying...\n");
+        log_warning ("SQLite3: cannot execute statment, database is busy. Retying...\n");
         retry_count--;
     }
 
@@ -245,32 +404,55 @@ sqlwrap_execute (sqlite3 *db, sqlite3_stmt *stmt, int retry_count, void **result
 }
 
 
+/** The column_t constructor.
+ * 
+ * Construct a column_t based on a prepared statement and index. prior to 
+ * calling stmt should be stepped, confirmed to be returning data, and 
+ * confirmed that the index is within range of said data.
+ * 
+ * The returned column_t is only valid until the next step of stmt.
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ *
+ * @param stmt an executing sqlite3_stmt.
+ * @param i a column index.
+ * 
+ * @return a column_t for the given statement and index.
+ * 
+ * @see column_t
+ * @see column_type_t
+ * @see column_type()
+ * @see column_match_type()
+ * @see sqlwrap_execute()
+ * @see logging_init()
+ */
 column_t
 column_get (sqlite3_stmt *stmt, int i)
 {
     column_t col;
 
     col.name = (char *)sqlite3_column_name (stmt, i);
-    col.type = sqlite3_column_type (stmt, i);
+    col.type = (column_type_t)sqlite3_column_type (stmt, i);
 
     switch (col.type)
     {
-    case SQLITE_INTEGER:
+    case COLUMN_INTEGER:
         col.m.i = sqlite3_column_int (stmt, i);
         break;
-    case SQLITE_FLOAT:
+    case COLUMN_FLOAT:
         log_error ("UNIMPLEMENTED SQLITE_FLOAT");
         abort ();
         break;
-    case SQLITE_BLOB:
+    case COLUMN_BLOB:
         col.bytes = (size_t)sqlite3_column_bytes (stmt, i);
         col.m.p = (void *)sqlite3_column_blob (stmt, i);
         break;
-    case SQLITE_TEXT:
+    case COLUMN_TEXT:
         col.bytes = (size_t)sqlite3_column_bytes (stmt, i);
         col.m.s = (char *)sqlite3_column_text (stmt, i);
         break;
-    case SQLITE_NULL:
+    case COLUMN_NULL:
         break;
     default:
         log_error ("SQLite3: Unknown column type!\n");
@@ -281,20 +463,37 @@ column_get (sqlite3_stmt *stmt, int i)
 }
 
 
+/** Convert column type to string.
+ * 
+ * Convert a column type to string and return it as a constant string. primary 
+ * intended for error logging and debugging. if the provided type does not 
+ * match any known typings, return "UNKNOWN".
+ * 
+ * The returned string is readonly and does not require freeing.
+ * 
+ * @param type a column_type_t type
+ * 
+ * @return a constant string representation of type
+ * 
+ * @see column_t
+ * @see column_type_t
+ * @see column_get()
+ * @see column_match_type()
+ */
 const char *
 column_type_string (int type)
 {
     switch (type)
     {
-    case SQLITE_INTEGER:
+    case COLUMN_INTEGER:
         return "SQLITE_INTEGER";
-    case SQLITE_FLOAT:
+    case COLUMN_FLOAT:
         return "SQLITE_FLOAT";
-    case SQLITE_BLOB:
+    case COLUMN_BLOB:
         return "SQLITE_BLOB";
-    case SQLITE_TEXT:
+    case COLUMN_TEXT:
         return "SQLITE_TEXT";
-    case SQLITE_NULL:
+    case COLUMN_NULL:
         return "SQLITE_NULL";
     }
     
@@ -302,8 +501,32 @@ column_type_string (int type)
 }
 
 
+/** Validate the typing of a column_t.
+ *
+ * Validate that a column_t object's type matches with an array of valid 
+ * typings. If no match is found throw a runtime error message listing both 
+ * the expected typings and the provided type.
+ * 
+ * if types is a NULL pointer or if n is 0, return a success.
+ * 
+ * Logging relies on logging-lib being initiallized. if uninitialized no 
+ * information/warnings/errors will be logged.
+ * 
+ * @param col a columnt_t to verify
+ * @param types an array of valid column_type_t types
+ * @param n the array length
+ * 
+ * @return on a success returns 1, on a failure returns 0.
+ * 
+ * @see column_t
+ * @see column_type_t
+ * @see column_get()
+ * @see column_type_string()
+ * @see sqlwrap_execute()
+ * @see logging_init()
+ */
 int
-column_match_type (column_t col, int *types, size_t n)
+column_match_type (column_t col, column_type_t *types, size_t n)
 {
     if ((n == 0) || (types == NULL)) return 1;
 

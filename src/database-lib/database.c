@@ -126,6 +126,12 @@ db_init (const char *dbfile, int dryrun)
 }
 
 
+void
+db_sync (sqlite3 *db, char *filename)
+{
+    (void)sqlwrap_save_memory (filename, db);
+}
+
 void 
 db_quit (sqlite3 *db)
 {
@@ -343,9 +349,9 @@ select_invoice_callback (sqlite3_stmt *stmt)
 
     int column_count = sqlite3_column_count (stmt);
 
-    int INTEGER[]        = { SQLITE_INTEGER, SQLITE_NULL };
-    int INTEGER_STRICT[] = { SQLITE_INTEGER };
-    int TEXT_STRICT[]    = { SQLITE_TEXT };
+    column_type_t INTEGER[]        = { COLUMN_INTEGER, COLUMN_NULL };
+    column_type_t INTEGER_STRICT[] = { COLUMN_INTEGER };
+    column_type_t TEXT_STRICT[]    = { COLUMN_TEXT };
 
     for (int i = 0; i < column_count; i++)
     {

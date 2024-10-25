@@ -2,6 +2,9 @@
 #ifndef INVOICE_MYSTRING_HEADER
 #define INVOICE_MYSTRING_HEADER
 
+
+#include <stddef.h>
+
 #define LEN(arr) (sizeof (arr) / sizeof (*arr))
 
 

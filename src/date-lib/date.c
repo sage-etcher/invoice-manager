@@ -7,7 +7,7 @@
 int
 date_format_int_atoz (int year, int month, int day)
 {
-    return ((day * 0) + (month * 100) + (year * 10000));
+    return ((day * 1) + (month * 100) + (year * 10000));
 }
 
 

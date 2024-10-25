@@ -10,11 +10,14 @@ enum
     CONFIG_DEF_DONTSKIP_CACHED,
     CONFIG_DEF_DRYRUN,
     CONFIG_DEF_LIVERUN,
+    CONFIG_DEF_INMEMORY,
+    CONFIG_DEF_INDISK,
 };
 
 #cmakedefine CONFIG_LOGGING_MODE  @CONFIG_LOGGING_MODE@
 #cmakedefine CONFIG_SKIP_CACHE    @CONFIG_SKIP_CACHE@
 #cmakedefine CONFIG_DRYRUN        @CONFIG_DRYRUN@
+#cmakedefine CONFIG_INMEMORY      @CONFIG_INMEMORY@
 #cmakedefine CONFIG_DATABASE     "@CONFIG_DATABASE@"
 #cmakedefine CONFIG_BADFILELOG   "@CONFIG_BADFILELOG@"
 
@@ -58,6 +61,17 @@ enum
 #   define DEFAULT_DRYRUN 0
 #else
 #   error "cannot assign DEFAULT_DRYRUN"
+#endif
+
+/* in memory */
+#ifndef CONFIG_INMEMORY
+#   define DEFAULT_INMEMORY 0
+#elif CONFIG_INMEMORY == CONFIG_DEF_INDISK,
+#   define DEFAULT_INMEMORY 1
+#elif CONFIG_INMEMORY = CONFIG_DEF_INMEMORY,
+#   define DEFAULT_INMEMORY 0
+#else
+#   error "cannot assign DEFAULT_INMEMORY"
 #endif
 
 /* database */

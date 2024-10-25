@@ -62,6 +62,7 @@ void sqlwrap_log_errorcode (int errcode);
 
 sqlite3 *sqlwrap_open (const char *dbfile, int flags);
 sqlite3 *sqlwrap_open_memory (const char *dbfile, int flags);
+int      sqlwrap_save_memory (const char *dbfile, sqlite3 *memdb);
 int      sqlwrap_close (sqlite3 *db);
 
 size_t sqlwrap_prepare_n (sqlite3 *db, const char **stmt_texts, sqlite3_stmt **stmts, size_t n);

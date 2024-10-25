@@ -5,6 +5,7 @@
 extern int g_set_logging_mode;
 extern int g_set_ignore_cached;
 extern int g_set_dryrun;
+extern int g_set_inmemory;
 
 extern char *g_set_database;
 extern char *g_set_badfilelog;

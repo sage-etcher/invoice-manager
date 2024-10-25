@@ -140,7 +140,7 @@ sqlwrap_open_memory (const char *dbfile, int flags)
 
     /* open source database as readonly */
     src = sqlwrap_open (dbfile, READONLY_FLAGS);
-    if (src == NULL) goto open_sqlite_dryrun_exit_failure;
+    if (src == NULL) return dst;
 
     /* copy from src to dst */
     backup = sqlite3_backup_init (dst, "main", src, "main");
@@ -168,6 +168,48 @@ open_sqlite_dryrun_exit_failure:
     (void)sqlwrap_close (dst); dst = NULL;
     goto open_sqlite_dryrun_exit;
 }
+
+
+int
+sqlwrap_save_memory (const char *dbfile, sqlite3 *src)
+{
+    int exitcode = 1;
+    sqlite3_backup *backup = NULL;
+    sqlite3 *dst = NULL;
+
+    int WRITECREATE_FLAGS = SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE;
+
+    /* log verbose */
+    log_verbose ("Writing a RAM backup to a file database\n");
+
+    /* open source database as readonly */
+    dst = sqlwrap_open (dbfile, WRITECREATE_FLAGS);
+    if (dst == NULL) goto sqlitewrap_save_memory_exit;
+
+    /* copy from src to dst */
+    backup = sqlite3_backup_init (dst, "main", src, "main");
+    if (backup == NULL) 
+    {
+        sqlwrap_log_error (dst);
+        log_error ("failed to initialize the backup\n");
+        
+    }
+
+    if (sqlite3_backup_step (backup, -1) != SQLITE_DONE)
+    {
+        sqlwrap_log_error (dst);
+        log_error ("failed to step through backup\n");
+        goto sqlitewrap_save_memory_exit;
+    }
+
+    /* exit */
+    exitcode = 0;
+sqlitewrap_save_memory_exit:
+    (void)sqlite3_backup_finish (backup); backup = NULL;
+    (void)sqlwrap_close (dst); dst = NULL;
+    return exitcode;
+}
+
 
 
 /** 

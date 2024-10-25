@@ -16,7 +16,7 @@ enum
     EXIT_FATAL,
 };
 
-static int main_init (sqlite3 **pdb);
+static int main_init (sqlite3 **pdb, int argc, char **argv);
 static void main_quit (sqlite3 *db);
 static int update_database (sqlite3 *db, FILE *input);
 
@@ -31,13 +31,12 @@ main (int argc, char **argv)
     sqlite3 *db = NULL;
 
     /* initialize all modules */
-    if (main_init (&db) == EXIT_FATAL) goto main_exit;
+    if (main_init (&db, argc, argv) == EXIT_FATAL) goto main_exit;
 
-    /* load commandline options */
-    (void)cli_parse_arguements (argc, argv);
     log_debug ("logging mode: %d\n",  g_set_logging_mode);
     log_debug ("cache: %s\n",         (g_set_ignore_cached ? "enabled" : "disabled"));
     log_debug ("dryrun: %s\n",        (g_set_dryrun ? "true" : "false"));
+    log_debug ("in memmory: %s\n",    (g_set_inmemory ? "true" : "false"));
     log_debug ("database: '%s'\n",    g_set_database);
     log_debug ("badfilelog: '%s'\n",  g_set_badfilelog);
 
@@ -54,7 +53,7 @@ main_exit:
 
 
 static int  
-main_init (sqlite3 **pdb)
+main_init (sqlite3 **pdb, int argc, char **argv)
 {
     sqlite3 *db = NULL;
 
@@ -62,6 +61,9 @@ main_init (sqlite3 **pdb)
 
     /* init default settings module */ 
     settings_load_defaults ();
+
+    /* load commandline options */
+    (void)cli_parse_arguements (argc, argv);
 
     /* initialize our logging system */
     logging_init (g_set_logging_mode, g_set_badfilelog);
@@ -74,7 +76,7 @@ main_init (sqlite3 **pdb)
     }
 
     /* we also would like database access */
-    db = db_init (g_set_database, g_set_dryrun);
+    db = db_init (g_set_database, (g_set_dryrun | g_set_inmemory));
     if (db == NULL)
     {
         log_error ("Failed to initialize database\n");
@@ -90,6 +92,7 @@ main_init (sqlite3 **pdb)
 static void
 main_quit (sqlite3 *db)
 {
+    if (g_set_inmemory) db_sync (db, g_set_database);
     db_quit (db); db = NULL;
     parser_quit ();
     logging_quit ();

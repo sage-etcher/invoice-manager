@@ -21,6 +21,8 @@ cli_parse_arguements (int argc, char **argv)
     {
         DISABLE_CACHE = CONARG_ID_CUSTOM,
         ENABLE_CACHE,
+        ON_DISK,
+        IN_MEMORY,
         DRYRUN,
         DATABASE,
         BADFILELOG,
@@ -35,6 +37,9 @@ cli_parse_arguements (int argc, char **argv)
         { DATABASE,      "-d", "--database",    CONARG_PARAM_REQUIRED },
         { BADFILELOG,    "-l", "--badfilelog",  CONARG_PARAM_REQUIRED },
         
+        { ON_DISK,       NULL, "--use-disk", CONARG_PARAM_NONE },
+        { IN_MEMORY,     NULL, "--use-ram",  CONARG_PARAM_NONE },
+
         { DISABLE_CACHE, NULL, "--disable-cache", CONARG_PARAM_NONE },
         { ENABLE_CACHE,  NULL, "--enable-cache",  CONARG_PARAM_NONE },
         { DRYRUN,        NULL, "--dryrun",        CONARG_PARAM_NONE },
@@ -65,6 +70,14 @@ cli_parse_arguements (int argc, char **argv)
 
         case DISABLE_CACHE:
             g_set_ignore_cached = 0;
+            break;
+
+        case ON_DISK:
+            g_set_inmemory = 1;
+            break;
+
+        case IN_MEMORY:
+            g_set_inmemory = 1;
             break;
 
         case BADFILELOG:
@@ -147,6 +160,10 @@ help_page (FILE *stream)
         "      --enable-cache          skip files already cached in the database\n"
         "      --disable-cache         update all files, ignoring weather they are\n"
         "                                cached or not (verry slow)\n"
+        "      --use-disk              preform all database operations on disk, using\n"
+        "                                the file.\n"
+        "      --use-ram               load the database into memory, and preform all\n"
+        "                                operation in RAM to improve preformance.\n"
         "  -t, --terse                 show minimal output/information\n"
         "  -v, --verbose               show more details and warnings at runtime\n"
         "      --debug                 show every last drop of information\n"

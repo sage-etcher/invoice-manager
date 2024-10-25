@@ -21,6 +21,7 @@ typedef struct
 
 sqlite3 *db_init (const char *dbfile, int dryrun);
 void     db_quit (sqlite3 *db);
+void     db_sync (sqlite3 *db, char *filename);
 
 int db_insert (sqlite3 *db, char *filepath, char *customer_name, int year, int month, int day);
 

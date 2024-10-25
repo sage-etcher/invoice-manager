@@ -182,6 +182,7 @@ parse_path (char *filepath)
 
     /* get customer name */
     (void)find_replace_char (parsed->name_raw, '_', ' ');
+    (void)find_replace_char (parsed->name_raw, '-', ' ');
     parsed->name = trim_whitespace (parsed->name_raw);
 
     /* validate the date */
